@@ -31,7 +31,7 @@ export function useCreateAppointment() {
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.message || "Failed to create appointment");
+        throw new Error(err.detail || err.message || "Failed to create appointment");
       }
       return api.appointments.create.responses[201].parse(await res.json());
     },

@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 
 // Pages
 import Landing from "@/pages/Landing";
+import Login from "@/pages/Login";
 import Onboarding from "@/pages/Onboarding";
 import AdminDashboard from "@/pages/admin/Dashboard";
 import AdminServices from "@/pages/admin/Services";
@@ -18,6 +19,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Landing} />
+      <Route path="/login" component={Login} />
       <Route path="/onboarding" component={Onboarding} />
       
       {/* Admin Routes */}
