@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Sidebar } from "@/components/Sidebar";
+import { useState, useEffect } from "react";
+import { AppShell } from "@/components/AppShell";
 import { useServices } from "@/hooks/use-services";
 import { useCreateAppointment } from "@/hooks/use-appointments";
 import { useAuth } from "@/hooks/use-auth";
@@ -31,11 +31,13 @@ export default function ProfessionalDashboard() {
   
   // Custom upload state
   const [uploadedProof, setUploadedProof] = useState<string | null>(null);
+  const [pendingUploadUrl, setPendingUploadUrl] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       customerName: "",
+      transactionId: "",
       paymentMethod: "cash",
       price: 0,
       serviceId: 0,
@@ -44,6 +46,14 @@ export default function ProfessionalDashboard() {
 
   const paymentMethod = form.watch("paymentMethod");
   const selectedServiceId = form.watch("serviceId");
+
+  useEffect(() => {
+    if (paymentMethod === "cash") {
+      form.setValue("transactionId", "");
+      setUploadedProof(null);
+      setPendingUploadUrl(null);
+    }
+  }, [paymentMethod, form]);
   
   // Update price when service changes
   const handleServiceChange = (val: string) => {
@@ -65,7 +75,8 @@ export default function ProfessionalDashboard() {
         contentType: file.type,
       }),
     });
-    const { uploadURL } = await res.json();
+    const { uploadURL, fileUrl } = await res.json();
+    setPendingUploadUrl(fileUrl);
     return {
       method: "PUT" as const,
       url: uploadURL,
@@ -75,57 +86,42 @@ export default function ProfessionalDashboard() {
 
   const onUploadComplete = (result: any) => {
     if (result.successful && result.successful.length > 0) {
-      // The backend needs to know how to reconstruct the URL or we pass the path
-      // Assuming public bucket or signed url logic - let's assume we get the URL back or construct it
-      // For this demo, let's assume result gives us enough or we use the file name
-      // Simplified: We really need the ObjectStorage response structure.
-      // Based on blueprint: `uploadFile` returns objectPath.
-      // Uppy returns uploadURL in result.successful[0].uploadURL usually
-      
-      // HACK for demo: We just need to signal it's done. 
-      // In a real app we'd get the URL from the metadata or the response.
-      // Let's assume the blueprint's ObjectUploader handles this cleanly.
-      
-      // Let's just say "Proof Uploaded"
-      // Since we don't get the clean URL back from Uppy easily without custom response handling in the blueprint, 
-      // let's use a simple state to pretend we have it.
-      // In reality, we would use the `useUpload` hook for better control.
-      
-      setUploadedProof("https://uploaded-proof-placeholder.com"); // Mock
+      if (pendingUploadUrl) setUploadedProof(pendingUploadUrl);
       toast({ title: "Comprovante enviado com sucesso!" });
     }
   };
 
   function onSubmit(values: FormValues) {
-    if (paymentMethod !== 'cash' && !uploadedProof) {
+    if (paymentMethod !== 'cash' && (!uploadedProof || !form.watch("transactionId"))) {
       toast({ title: "Erro", description: "É necessário anexar o comprovante para pagamentos digitais.", variant: "destructive" });
       return;
     }
 
+    const transactionId = values.transactionId?.trim() || undefined;
     mutate({
       ...values,
+      transactionId,
       proofUrl: uploadedProof,
     }, {
       onSuccess: () => {
         toast({ title: "Corte registrado com sucesso!" });
         form.reset();
         setUploadedProof(null);
+        setPendingUploadUrl(null);
       }
     });
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar />
-      <main className="flex-1 ml-64 p-8">
-        <header className="mb-8">
-          <h1 className="text-3xl font-display font-bold text-primary">Registrar Corte</h1>
-          <p className="text-muted-foreground mt-2">Olá, {user?.firstName}. Vamos registrar um novo atendimento?</p>
-        </header>
+    <AppShell>
+      <header className="mb-8">
+        <h1 className="text-3xl font-display font-bold text-primary premium-outline">Registrar Corte</h1>
+        <p className="text-muted-foreground mt-2">Olá, {user?.firstName}. Vamos registrar um novo atendimento?</p>
+      </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
-            <Card className="shadow-lg shadow-primary/5 border-border">
+            <Card className="shadow-lg shadow-primary/5 border-border premium-outline">
               <CardHeader>
                 <CardTitle>Detalhes do Atendimento</CardTitle>
                 <CardDescription>Preencha os dados do serviço realizado.</CardDescription>
@@ -214,11 +210,25 @@ export default function ProfessionalDashboard() {
                           <label className="text-sm font-medium">Comprovante de Pagamento</label>
                           {uploadedProof && <span className="text-xs text-emerald-600 font-medium flex items-center gap-1"><CheckCircle className="w-3 h-3"/> Anexado</span>}
                         </div>
+
+                        <FormField
+                          control={form.control}
+                          name="transactionId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>ID da Transação (E2E/NSU/TID)</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Informe o identificador" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                         
                         <ObjectUploader
                           onGetUploadParameters={getUploadParameters}
                           onComplete={onUploadComplete}
-                          buttonClassName="w-full bg-white border border-input hover:bg-accent/5 text-foreground shadow-sm"
+                          buttonClassName="w-full bg-card border border-input hover:bg-accent/10 text-foreground shadow-sm"
                         >
                           <div className="flex items-center gap-2">
                             <Upload className="w-4 h-4" />
@@ -253,7 +263,7 @@ export default function ProfessionalDashboard() {
               </CardContent>
             </Card>
             
-            <div className="rounded-xl border border-border bg-card p-4">
+            <div className="rounded-xl border border-border bg-card p-4 premium-outline">
               <h3 className="font-semibold mb-4">Resumo do Serviço</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between py-2 border-b">
@@ -265,15 +275,15 @@ export default function ProfessionalDashboard() {
                 <div className="flex justify-between py-2 border-b">
                   <span className="text-muted-foreground">Sua Comissão</span>
                   <span className="font-medium text-emerald-600">
-                    {selectedServiceId ? <Currency value={form.watch('price') * 0.5} /> : '-'} 
-                    {/* Mock calculation, should come from service.commissionRate */}
+                    {selectedServiceId ? (
+                      <Currency value={Math.round(form.watch('price') * ((services?.find(s => s.id === selectedServiceId)?.commissionRate || 0) / 100))} />
+                    ) : '-'}
                   </span>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </main>
-    </div>
+    </AppShell>
   );
 }

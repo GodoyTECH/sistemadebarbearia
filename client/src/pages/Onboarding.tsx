@@ -42,7 +42,7 @@ export default function Onboarding() {
     <div className="min-h-screen flex items-center justify-center bg-muted/20 p-4">
       <Card className="max-w-md w-full shadow-2xl shadow-primary/5 border-border/50">
         <CardHeader className="text-center pb-2">
-          <CardTitle className="font-display text-2xl font-bold text-primary">Bem-vindo ao Luxe</CardTitle>
+          <CardTitle className="font-display text-2xl font-bold text-primary premium-outline">Bem-vindo ao Luxe</CardTitle>
           <CardDescription>
             Complete seu perfil para acessar o sistema.
           </CardDescription>

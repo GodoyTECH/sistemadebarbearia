@@ -1,5 +1,5 @@
 import { useStats } from "@/hooks/use-stats";
-import { Sidebar } from "@/components/Sidebar";
+import { AppShell } from "@/components/AppShell";
 import { Currency } from "@/components/Currency";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -17,24 +17,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function AdminDashboard() {
   const { data: stats, isLoading } = useStats();
 
-  const chartData = [
-    { name: 'Seg', total: Math.floor(Math.random() * 5000) },
-    { name: 'Ter', total: Math.floor(Math.random() * 5000) },
-    { name: 'Qua', total: Math.floor(Math.random() * 5000) },
-    { name: 'Qui', total: Math.floor(Math.random() * 5000) },
-    { name: 'Sex', total: Math.floor(Math.random() * 8000) },
-    { name: 'Sab', total: Math.floor(Math.random() * 10000) },
-    { name: 'Dom', total: Math.floor(Math.random() * 4000) },
-  ];
+  const chartData = (stats?.revenueByDay || []).map((entry) => ({
+    name: entry.day,
+    total: entry.total,
+  }));
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar />
-      <main className="flex-1 ml-64 p-8">
-        <header className="mb-8">
-          <h1 className="text-3xl font-display font-bold text-primary">Dashboard Administrativo</h1>
-          <p className="text-muted-foreground mt-2">Visão geral do desempenho do salão.</p>
-        </header>
+    <AppShell>
+      <header className="mb-8">
+        <h1 className="text-3xl font-display font-bold text-primary premium-outline">Dashboard Administrativo</h1>
+        <p className="text-muted-foreground mt-2">Visão geral do desempenho do salão.</p>
+      </header>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -69,7 +62,7 @@ export default function AdminDashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Revenue Chart */}
-          <Card className="col-span-1 shadow-lg shadow-black/5 border-border/50">
+          <Card className="col-span-1 shadow-lg shadow-black/20 border-border/50 premium-outline">
             <CardHeader>
               <CardTitle>Receita Semanal</CardTitle>
             </CardHeader>
@@ -109,20 +102,20 @@ export default function AdminDashboard() {
           </Card>
 
           {/* Alert Card */}
-          <Card className="col-span-1 border-amber-200 bg-amber-50/50 shadow-none">
+          <Card className="col-span-1 border-amber-300/40 bg-amber-500/10 shadow-none premium-outline">
             <CardHeader>
-              <CardTitle className="text-amber-900 flex items-center gap-2">
+              <CardTitle className="text-amber-200 flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5" />
                 Alertas Trabalhistas
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <p className="text-sm text-amber-800">
+                <p className="text-sm text-amber-200/80">
                   Atenção às regras de parceria. Verifique se os contratos de todos os profissionais estão atualizados e se os repasses estão dentro da faixa permitida.
                 </p>
-                <div className="p-4 bg-white rounded-lg border border-amber-100">
-                  <h4 className="font-semibold text-amber-900 text-sm mb-1">Dica Jurídica</h4>
+                <div className="p-4 bg-card rounded-lg border border-amber-500/30">
+                  <h4 className="font-semibold text-amber-200 text-sm mb-1">Dica Jurídica</h4>
                   <p className="text-xs text-muted-foreground">
                     Para evitar vínculo empregatício, certifique-se de que os profissionais tenham autonomia na gestão de agenda e não recebam ordens diretas de subordinação.
                   </p>
@@ -131,14 +124,13 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
-      </main>
-    </div>
+    </AppShell>
   );
 }
 
 function StatCard({ title, value, icon: Icon, description, trend, alert, highlight }: any) {
   return (
-    <Card className={`shadow-sm border-border/60 transition-all duration-200 hover:shadow-md ${highlight ? 'ring-2 ring-amber-400 border-amber-400 bg-amber-50/30' : ''}`}>
+    <Card className={`shadow-sm border-border/60 transition-all duration-200 hover:shadow-md ${highlight ? 'ring-2 ring-amber-400 border-amber-400 bg-amber-50/30 premium-outline' : ''}`}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}

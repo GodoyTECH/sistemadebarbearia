@@ -1,16 +1,10 @@
 import { useState, useCallback } from "react";
 import type { UppyFile } from "@uppy/core";
 
-interface UploadMetadata {
-  name: string;
-  size: number;
-  contentType: string;
-}
-
 interface UploadResponse {
   uploadURL: string;
   objectPath: string;
-  metadata: UploadMetadata;
+  fileUrl: string;
 }
 
 interface UseUploadOptions {
@@ -196,4 +190,3 @@ export function useUpload(options: UseUploadOptions = {}) {
     progress,
   };
 }
-
