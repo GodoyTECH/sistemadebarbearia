@@ -1,0 +1,102 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: 'Inter', sans-serif;
+  --font-display: 'Playfair Display', serif;
+
+  /* Sophisticated Salon Palette: Deep Charcoal, Soft Gold, Clean White */
+  --background: 210 20% 98%;
+  --foreground: 224 71% 4%;
+  
+  --card: 0 0% 100%;
+  --card-foreground: 224 71% 4%;
+ 
+  --popover: 0 0% 100%;
+  --popover-foreground: 224 71% 4%;
+ 
+  /* Primary: Deep Charcoal Blue */
+  --primary: 224 64% 12%;
+  --primary-foreground: 210 20% 98%;
+ 
+  /* Secondary: Soft Slate */
+  --secondary: 220 14% 94%;
+  --secondary-foreground: 220.9 39.3% 11%;
+ 
+  /* Muted: Subtle Gray */
+  --muted: 220 14% 94%;
+  --muted-foreground: 220 8.9% 46.1%;
+ 
+  /* Accent: Luxurious Gold */
+  --accent: 38 45% 55%;
+  --accent-foreground: 224 71% 4%;
+ 
+  /* Destructive: Refined Red */
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 210 20% 98%;
+
+  --border: 220 13% 88%;
+  --input: 220 13% 88%;
+  --ring: 224 64% 12%;
+ 
+  --radius: 0.75rem;
+}
+ 
+.dark {
+  --background: 224 71% 4%;
+  --foreground: 210 20% 98%;
+ 
+  --card: 224 71% 8%;
+  --card-foreground: 210 20% 98%;
+ 
+  --popover: 224 71% 4%;
+  --popover-foreground: 210 20% 98%;
+ 
+  --primary: 210 20% 98%;
+  --primary-foreground: 224 71% 4%;
+ 
+  --secondary: 215 27.9% 16.9%;
+  --secondary-foreground: 210 20% 98%;
+ 
+  --muted: 215 27.9% 16.9%;
+  --muted-foreground: 217.9 10.6% 64.9%;
+ 
+  --accent: 38 45% 55%;
+  --accent-foreground: 210 20% 98%;
+ 
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 20% 98%;
+ 
+  --border: 215 27.9% 16.9%;
+  --input: 215 27.9% 16.9%;
+  --ring: 216 34% 17%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased font-sans;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-semibold tracking-tight;
+  }
+}
+
+/* Custom scrollbar for webkit */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-border rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/50;
+}
