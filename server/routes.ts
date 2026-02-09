@@ -17,6 +17,9 @@ export async function registerRoutes(
   registerObjectStorageRoutes(app);
 
   // === API Routes ===
+  app.get(api.health.check.path, (_req, res) => {
+    res.json({ status: "ok" });
+  });
 
   app.get(api.auth.me.path, isAuthenticated, async (req: any, res) => {
     const userId = req.user.claims.sub;
