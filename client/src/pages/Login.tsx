@@ -102,14 +102,14 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <Card className="w-full max-w-md border-border/60 shadow-2xl shadow-black/20">
+    <div className="min-h-screen flex items-center justify-center bg-premium-gradient px-4">
+      <Card className="w-full max-w-md border-border/60 shadow-2xl shadow-black/20 glass-card border-flash">
         <CardHeader className="text-center space-y-4">
-          <div className="mx-auto h-12 w-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/30 logo-pulse">
+          <div className="mx-auto h-12 w-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/30 logo-pulse float-soft">
             <Scissors className="h-6 w-6" />
           </div>
           <div>
-            <CardTitle className="text-2xl font-display premium-outline">Acesso Profissional</CardTitle>
+            <CardTitle className="text-2xl font-display premium-outline gold-glow">Acesso Profissional</CardTitle>
             <CardDescription>Entre com suas credenciais para continuar.</CardDescription>
           </div>
         </CardHeader>

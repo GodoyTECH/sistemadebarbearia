@@ -109,7 +109,7 @@ export function AppShell({ children }: AppShellProps) {
               <Scissors className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="font-display font-bold text-xl leading-none premium-outline">Luxe</h1>
+              <h1 className="font-display font-bold text-xl leading-none premium-outline gold-glow">Luxe</h1>
               <span className="text-xs text-muted-foreground uppercase tracking-wider">Salon System</span>
             </div>
           </div>
@@ -119,19 +119,19 @@ export function AppShell({ children }: AppShellProps) {
       </aside>
 
       <div className="flex-1 md:ml-64 w-full">
-        <header className="hidden md:flex items-center justify-between px-8 py-4 border-b border-border/50 bg-card/80 backdrop-blur sticky top-0 z-10">
+        <header className="hidden md:flex items-center justify-between px-8 py-4 border-b border-border/50 bg-card/80 backdrop-blur sticky top-0 z-10 border-flash">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Sistema Luxe</p>
-            <p className="text-lg font-display font-semibold premium-outline">{storeName}</p>
+            <p className="text-lg font-display font-semibold premium-outline gold-glow">{storeName}</p>
           </div>
           <div className="text-right">
             <p className="text-xs text-muted-foreground">Número da Loja</p>
             <p className="text-sm font-semibold text-primary">{storeNumber}</p>
           </div>
         </header>
-        <header className="md:hidden flex items-center justify-between px-4 py-4 border-b border-border/50 bg-card/80 backdrop-blur">
+        <header className="md:hidden flex items-center justify-between px-4 py-4 border-b border-border/50 bg-card/80 backdrop-blur border-flash">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 bg-primary rounded-xl flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/30 logo-pulse">
+            <div className="h-9 w-9 bg-primary rounded-xl flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/30 logo-pulse float-soft">
               <Scissors className="h-5 w-5" />
             </div>
             <div>
@@ -157,7 +157,7 @@ export function AppShell({ children }: AppShellProps) {
                     <Scissors className="h-6 w-6" />
                   </div>
                   <div>
-                    <h1 className="font-display font-bold text-xl leading-none premium-outline">Luxe</h1>
+                    <h1 className="font-display font-bold text-xl leading-none premium-outline gold-glow">Luxe</h1>
                     <span className="text-xs text-muted-foreground uppercase tracking-wider">Salon System</span>
                   </div>
                 </div>

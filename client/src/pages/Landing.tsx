@@ -15,22 +15,22 @@ export default function Landing() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
+    <div className="min-h-screen bg-premium-gradient flex flex-col relative overflow-hidden">
       {/* Abstract Background Shapes */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
       <div className="absolute bottom-0 left-0 w-[700px] h-[700px] bg-accent/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
 
       <nav className="w-full max-w-7xl mx-auto px-6 py-8 flex items-center justify-between z-10">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 bg-primary rounded-xl flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/30 logo-pulse">
+          <div className="h-10 w-10 bg-primary rounded-xl flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/30 logo-pulse float-soft">
             <Scissors className="h-6 w-6" />
           </div>
-          <span className="font-display font-bold text-2xl text-foreground premium-outline">Luxe</span>
+          <span className="font-display font-bold text-2xl text-foreground premium-outline gold-glow">Luxe</span>
         </div>
         <Button 
           variant="outline" 
           onClick={() => window.location.href = "/login"}
-          className="rounded-full px-6 border-primary/20 hover:bg-primary/5 hover:text-primary"
+          className="rounded-full px-6 border-primary/20 hover:bg-primary/5 hover:text-primary border-flash"
         >
           Login Profissional
         </Button>
@@ -43,12 +43,12 @@ export default function Landing() {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="space-y-8"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 text-accent-foreground text-sm font-medium border border-accent/30">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 text-accent-foreground text-sm font-medium border border-accent/30 border-flash">
             <Star className="w-4 h-4 text-accent" />
             <span>Sistema de Gestão Premium</span>
           </div>
           
-          <h1 className="font-display font-bold text-5xl md:text-7xl tracking-tight text-primary leading-[1.1] premium-outline">
+          <h1 className="font-display font-bold text-5xl md:text-7xl tracking-tight text-primary leading-[1.1] premium-outline gold-glow">
             Elevando a Gestão <br className="hidden md:block"/> do seu Salão
           </h1>
           
@@ -59,7 +59,7 @@ export default function Landing() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <Button 
               size="lg" 
-              className="h-14 px-10 rounded-full text-lg shadow-xl shadow-primary/20 hover:shadow-2xl hover:shadow-primary/30 transition-all hover:-translate-y-1"
+              className="h-14 px-10 rounded-full text-lg shadow-xl shadow-primary/20 hover:shadow-2xl hover:shadow-primary/30 transition-all hover:-translate-y-1 border-flash"
               onClick={() => window.location.href = "/login"}
             >
               Acessar Plataforma
@@ -67,7 +67,7 @@ export default function Landing() {
             <Button 
               variant="outline" 
               size="lg" 
-              className="h-14 px-10 rounded-full text-lg border-primary/30 hover:bg-primary/10"
+              className="h-14 px-10 rounded-full text-lg border-primary/30 hover:bg-primary/10 border-flash"
               onClick={() => window.location.href = "/register"}
             >
               Criar Conta
@@ -92,7 +92,7 @@ export default function Landing() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 + (i * 0.1) }}
-                className="p-6 rounded-2xl bg-card/80 backdrop-blur-sm border border-border/60 shadow-sm"
+                className="p-6 rounded-2xl glass-card border-flash"
               >
                 <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-4 text-primary">
                   <CheckCircle className="w-5 h-5" />
