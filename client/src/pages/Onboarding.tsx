@@ -1,4 +1,5 @@
 import { useForm } from "react-hook-form";
+import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useUpdateProfile, useProfile } from "@/hooks/use-profile";
@@ -13,7 +14,7 @@ import { Loader2 } from "lucide-react";
 const onboardingSchema = z.object({
   cpf: z.string().min(11, "CPF inválido").max(14),
   phone: z.string().min(10, "Telefone inválido"),
-  role: z.enum(["admin", "professional"]),
+  role: z.enum(["manager", "professional"]),
 });
 
 type OnboardingValues = z.infer<typeof onboardingSchema>;
@@ -31,8 +32,14 @@ export default function Onboarding() {
     },
   });
 
+  useEffect(() => {
+    if (data?.user?.role) {
+      form.setValue("role", data.user.role as "manager" | "professional");
+    }
+  }, [data, form]);
+
   if (isLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
-  if (data?.profile) return <Redirect to={data.profile.role === 'admin' ? '/admin' : '/professional'} />;
+  if (data?.profile) return <Redirect to={data.profile.role === 'manager' ? '/admin' : '/professional'} />;
 
   function onSubmit(values: OnboardingValues) {
     mutate(values);
@@ -42,7 +49,7 @@ export default function Onboarding() {
     <div className="min-h-screen flex items-center justify-center bg-muted/20 p-4">
       <Card className="max-w-md w-full shadow-2xl shadow-primary/5 border-border/50">
         <CardHeader className="text-center pb-2">
-          <CardTitle className="font-display text-2xl font-bold text-primary">Bem-vindo ao Luxe</CardTitle>
+          <CardTitle className="font-display text-2xl font-bold text-primary premium-outline">Bem-vindo ao Luxe</CardTitle>
           <CardDescription>
             Complete seu perfil para acessar o sistema.
           </CardDescription>
@@ -56,15 +63,15 @@ export default function Onboarding() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Tipo de Perfil</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione sua função" />
+                          <SelectValue placeholder={data?.user?.role === "manager" ? "Gerente" : "Profissional"} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="professional">Profissional (Barbeiro/Cabeleireiro)</SelectItem>
-                        <SelectItem value="admin">Administrador</SelectItem>
+                        <SelectItem value="manager">Gerente</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

@@ -8,8 +8,8 @@ import { relations } from "drizzle-orm";
 export * from "./models/auth";
 
 // Enums
-export const roleEnum = pgEnum("role", ["admin", "professional"]);
-export const serviceTypeEnum = pgEnum("service_type", ["male", "female", "promo"]);
+export const roleEnum = pgEnum("role", ["manager", "professional"]);
+export const serviceTypeEnum = pgEnum("service_type", ["male", "female", "general", "promo"]);
 export const paymentMethodEnum = pgEnum("payment_method", ["cash", "card", "pix"]);
 export const appointmentStatusEnum = pgEnum("appointment_status", ["pending", "confirmed", "rejected"]);
 
@@ -58,12 +58,14 @@ export const appointments = pgTable("appointments", {
   professionalId: varchar("professional_id").notNull().references(() => users.id),
   serviceId: integer("service_id").notNull().references(() => services.id),
   date: timestamp("date").defaultNow().notNull(),
-  // customerName: text("customer_name").notNull(), // Removed as requested
+  customerName: text("customer_name").notNull(),
   price: integer("price").notNull(), // Snapshot of price at time of service
   commissionRate: integer("commission_rate").notNull(), // Snapshot
   paymentMethod: paymentMethodEnum("payment_method").notNull(),
+  transactionId: text("transaction_id"),
   proofUrl: text("proof_url"), // For pix/card
   status: appointmentStatusEnum("status").default("pending").notNull(),
+  possibleDuplicate: boolean("possible_duplicate").default(false).notNull(),
 });
 
 // Relations
@@ -102,7 +104,8 @@ export const insertAppointmentSchema = createInsertSchema(appointments).omit({
   professionalId: true, 
   date: true,
   status: true,
-  commissionRate: true
+  commissionRate: true,
+  possibleDuplicate: true
 });
 
 // Types

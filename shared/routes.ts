@@ -38,6 +38,44 @@ export const errorSchemas = {
 
 export const api = {
   auth: {
+    login: {
+      method: 'POST' as const,
+      path: '/api/auth/login' as const,
+      input: z.object({
+        email: z.string().email(),
+        password: z.string().min(6),
+        storeNumber: z.string().optional(),
+        rememberMe: z.boolean().optional(),
+      }),
+      responses: {
+        200: z.any(),
+        401: errorSchemas.unauthorized,
+      },
+    },
+    register: {
+      method: 'POST' as const,
+      path: '/api/auth/register' as const,
+      input: z.object({
+        firstName: z.string(),
+        lastName: z.string().optional(),
+        email: z.string().email(),
+        password: z.string().min(6),
+        phone: z.string(),
+        role: z.enum(["manager", "professional"]),
+        storeNumber: z.string().optional(),
+        storeName: z.string().optional(),
+      }),
+      responses: {
+        201: z.any(),
+      },
+    },
+    logout: {
+      method: 'POST' as const,
+      path: '/api/auth/logout' as const,
+      responses: {
+        200: z.object({ ok: z.boolean() }),
+      },
+    },
     me: {
       method: 'GET' as const,
       path: '/api/me' as const,
@@ -45,6 +83,11 @@ export const api = {
         200: z.object({
           user: z.any(),
           profile: z.custom<typeof profiles.$inferSelect>().nullable(),
+          store: z.object({
+            id: z.string(),
+            storeNumber: z.string(),
+            storeName: z.string(),
+          }).nullable(),
         }),
         401: errorSchemas.unauthorized,
       },
@@ -74,6 +117,25 @@ export const api = {
       responses: {
         201: z.custom<typeof services.$inferSelect>(),
         401: errorSchemas.unauthorized,
+      },
+    },
+    update: {
+      method: 'PATCH' as const,
+      path: '/api/services/:id' as const,
+      input: insertServiceSchema.partial(),
+      responses: {
+        200: z.custom<typeof services.$inferSelect>(),
+        401: errorSchemas.unauthorized,
+        404: errorSchemas.notFound,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/services/:id' as const,
+      responses: {
+        204: z.any(),
+        401: errorSchemas.unauthorized,
+        404: errorSchemas.notFound,
       },
     }
   },
@@ -135,6 +197,15 @@ export const api = {
         201: z.custom<typeof appointments.$inferSelect>(),
         401: errorSchemas.unauthorized,
       },
+    },
+    updateStatus: {
+      method: 'PATCH' as const,
+      path: '/api/appointments/:id/status' as const,
+      input: z.object({ status: z.string(), reason: z.string().optional() }),
+      responses: {
+        200: z.custom<typeof appointments.$inferSelect>(),
+        401: errorSchemas.unauthorized,
+      },
     }
   },
   stats: {
@@ -148,6 +219,7 @@ export const api = {
           totalCommission: z.number(),
           totalDeductions: z.number(),
           netPayable: z.number(),
+          pendingApprovals: z.number(),
           professionals: z.array(z.object({
             id: z.string(),
             name: z.string(),
@@ -158,7 +230,11 @@ export const api = {
             individualDeductions: z.number(),
             totalDeductions: z.number(),
             netPayable: z.number(),
-          }))
+          })),
+          revenueByDay: z.array(z.object({
+            day: z.string(),
+            total: z.number(),
+          })),
         }),
         401: errorSchemas.unauthorized,
       },

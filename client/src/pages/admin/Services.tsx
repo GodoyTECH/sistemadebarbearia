@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Sidebar } from "@/components/Sidebar";
-import { useServices, useCreateService, useDeleteService, useUpdateService } from "@/hooks/use-services";
+import { AppShell } from "@/components/AppShell";
+import { useServices, useCreateService, useDeleteService } from "@/hooks/use-services";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -20,48 +20,56 @@ type FormValues = z.infer<typeof insertServiceSchema>;
 export default function ServicesPage() {
   const { data: services, isLoading } = useServices();
   const [open, setOpen] = useState(false);
-  
+
   if (isLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar />
-      <main className="flex-1 ml-64 p-8">
-        <header className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-display font-bold text-primary">Serviços & Promoções</h1>
-            <p className="text-muted-foreground mt-2">Gerencie os tipos de corte e valores.</p>
-          </div>
-          <ServiceDialog open={open} onOpenChange={setOpen} />
-        </header>
-
-        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/30 hover:bg-muted/30">
-                <TableHead>Nome</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Preço</TableHead>
-                <TableHead>Comissão (%)</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {services?.map((service) => (
-                <ServiceRow key={service.id} service={service} />
-              ))}
-              {services?.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    Nenhum serviço cadastrado.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+    <AppShell>
+      <header className="flex flex-col md:flex-row md:justify-between md:items-center mb-8 gap-4">
+        <div>
+          <h1 className="text-3xl font-display font-bold text-primary premium-outline">Serviços & Promoções</h1>
+          <p className="text-muted-foreground mt-2">Gerencie os tipos de corte e valores.</p>
         </div>
-      </main>
-    </div>
+        <ServiceDialog open={open} onOpenChange={setOpen} />
+      </header>
+
+      <div className="hidden md:block rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/30 hover:bg-muted/30">
+              <TableHead>Nome</TableHead>
+              <TableHead>Tipo</TableHead>
+              <TableHead>Preço</TableHead>
+              <TableHead>Comissão (%)</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {services?.map((service) => (
+              <ServiceRow key={service.id} service={service} />
+            ))}
+            {services?.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  Nenhum serviço cadastrado.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="md:hidden space-y-4">
+        {services?.map((service) => (
+          <ServiceCard key={service.id} service={service} />
+        ))}
+        {services?.length === 0 && (
+          <div className="rounded-xl border border-border bg-card p-6 text-center text-muted-foreground">
+            Nenhum serviço cadastrado.
+          </div>
+        )}
+      </div>
+    </AppShell>
   );
 }
 
@@ -80,16 +88,18 @@ function ServiceRow({ service }: { service: any }) {
   return (
     <TableRow>
       <TableCell className="font-medium">{service.name}</TableCell>
-      <TableCell className="capitalize">{service.type === 'promo' ? 'Promoção' : service.type === 'male' ? 'Masculino' : 'Feminino'}</TableCell>
+      <TableCell className="capitalize">
+        {service.type === 'promo' ? 'Promoção' : service.type === 'male' ? 'Masculino' : service.type === 'female' ? 'Feminino' : 'Geral'}
+      </TableCell>
       <TableCell><Currency value={service.price} /></TableCell>
       <TableCell>{service.commissionRate}%</TableCell>
       <TableCell className="text-right space-x-2">
         <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
           <Edit2 className="h-4 w-4" />
         </Button>
-        <Button 
-          variant="ghost" 
-          size="icon" 
+        <Button
+          variant="ghost"
+          size="icon"
           className="h-8 w-8 text-muted-foreground hover:text-destructive"
           onClick={handleDelete}
         >
@@ -100,10 +110,50 @@ function ServiceRow({ service }: { service: any }) {
   );
 }
 
+function ServiceCard({ service }: { service: any }) {
+  const { mutate: deleteService } = useDeleteService();
+  const { toast } = useToast();
+
+  const handleDelete = () => {
+    if (confirm("Tem certeza que deseja excluir este serviço?")) {
+      deleteService(service.id, {
+        onSuccess: () => toast({ title: "Serviço excluído com sucesso" })
+      });
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-4 shadow-sm space-y-3">
+      <div>
+        <p className="text-sm text-muted-foreground">Serviço</p>
+        <p className="font-semibold">{service.name}</p>
+      </div>
+      <div className="text-sm text-muted-foreground space-y-1">
+        <p>Tipo: <span className="text-foreground capitalize">{service.type === 'promo' ? 'Promoção' : service.type === 'male' ? 'Masculino' : service.type === 'female' ? 'Feminino' : 'Geral'}</span></p>
+        <p>Preço: <span className="text-foreground"><Currency value={service.price} /></span></p>
+        <p>Comissão: <span className="text-foreground">{service.commissionRate}%</span></p>
+      </div>
+      <div className="flex justify-end gap-2">
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
+          <Edit2 className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+          onClick={handleDelete}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function ServiceDialog({ open, onOpenChange }: { open: boolean, onOpenChange: (v: boolean) => void }) {
   const { mutate, isPending } = useCreateService();
   const { toast } = useToast();
-  
+
   const form = useForm<FormValues>({
     resolver: zodResolver(insertServiceSchema),
     defaultValues: {
@@ -193,6 +243,7 @@ function ServiceDialog({ open, onOpenChange }: { open: boolean, onOpenChange: (v
                     <SelectContent>
                       <SelectItem value="male">Masculino</SelectItem>
                       <SelectItem value="female">Feminino</SelectItem>
+                      <SelectItem value="general">Geral</SelectItem>
                       <SelectItem value="promo">Promoção</SelectItem>
                     </SelectContent>
                   </Select>

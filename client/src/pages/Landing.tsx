@@ -11,7 +11,7 @@ export default function Landing() {
 
   if (!isLoading && isAuthenticated) {
     if (!data?.profile) return <Redirect to="/onboarding" />;
-    return <Redirect to={data.profile.role === 'admin' ? '/admin' : '/professional'} />;
+    return <Redirect to={data.profile.role === 'manager' ? '/admin' : '/professional'} />;
   }
 
   return (
@@ -22,14 +22,14 @@ export default function Landing() {
 
       <nav className="w-full max-w-7xl mx-auto px-6 py-8 flex items-center justify-between z-10">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 bg-primary rounded-xl flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/20">
+          <div className="h-10 w-10 bg-primary rounded-xl flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/30 logo-pulse">
             <Scissors className="h-6 w-6" />
           </div>
-          <span className="font-display font-bold text-2xl text-foreground">Luxe</span>
+          <span className="font-display font-bold text-2xl text-foreground premium-outline">Luxe</span>
         </div>
         <Button 
           variant="outline" 
-          onClick={() => window.location.href = "/api/login"}
+          onClick={() => window.location.href = "/login"}
           className="rounded-full px-6 border-primary/20 hover:bg-primary/5 hover:text-primary"
         >
           Login Profissional
@@ -43,12 +43,12 @@ export default function Landing() {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="space-y-8"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 text-accent-foreground text-sm font-medium border border-accent/20">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 text-accent-foreground text-sm font-medium border border-accent/30">
             <Star className="w-4 h-4 text-accent" />
             <span>Sistema de Gestão Premium</span>
           </div>
           
-          <h1 className="font-display font-bold text-5xl md:text-7xl tracking-tight text-primary leading-[1.1]">
+          <h1 className="font-display font-bold text-5xl md:text-7xl tracking-tight text-primary leading-[1.1] premium-outline">
             Elevando a Gestão <br className="hidden md:block"/> do seu Salão
           </h1>
           
@@ -60,9 +60,17 @@ export default function Landing() {
             <Button 
               size="lg" 
               className="h-14 px-10 rounded-full text-lg shadow-xl shadow-primary/20 hover:shadow-2xl hover:shadow-primary/30 transition-all hover:-translate-y-1"
-              onClick={() => window.location.href = "/api/login"}
+              onClick={() => window.location.href = "/login"}
             >
               Acessar Plataforma
+            </Button>
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="h-14 px-10 rounded-full text-lg border-primary/30 hover:bg-primary/10"
+              onClick={() => window.location.href = "/register"}
+            >
+              Criar Conta
             </Button>
             <Button 
               variant="ghost" 
@@ -84,9 +92,9 @@ export default function Landing() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 + (i * 0.1) }}
-                className="p-6 rounded-2xl bg-white/50 backdrop-blur-sm border border-white/60 shadow-sm"
+                className="p-6 rounded-2xl bg-card/80 backdrop-blur-sm border border-border/60 shadow-sm"
               >
-                <div className="h-10 w-10 rounded-full bg-primary/5 flex items-center justify-center mb-4 text-primary">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-4 text-primary">
                   <CheckCircle className="w-5 h-5" />
                 </div>
                 <h3 className="font-bold text-lg mb-2">{item.title}</h3>

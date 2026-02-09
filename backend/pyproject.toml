@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sistemadebarbearia-backend"
+version = "0.1.0"
+description = "FastAPI backend for Sistema de Barbearia"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi==0.115.6",
+  "uvicorn[standard]==0.30.6",
+  "SQLAlchemy==2.0.36",
+  "psycopg[binary]==3.2.3",
+  "Alembic==1.14.0",
+  "pydantic==2.10.4",
+  "pydantic-settings==2.7.0",
+  "python-multipart==0.0.12",
+  "passlib[bcrypt]==1.7.4",
+  "python-jose[cryptography]==3.3.0",
+  "httpx==0.27.2",
+  "email-validator==2.2.0",
+]
+
+[project.optional-dependencies]
+Dev = [
+  "pytest==8.3.4",
+  "pytest-asyncio==0.24.0",
+  "coverage==7.6.8",
+]
+
+[tool.pytest.ini_options]
+addopts = "-q"
