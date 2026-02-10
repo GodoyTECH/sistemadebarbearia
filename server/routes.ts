@@ -22,14 +22,7 @@ function verifyPassword(password: string, stored: string) {
   const [salt, key] = stored.split(":");
   if (!salt || !key) return false;
   const derivedKey = crypto.scryptSync(password, salt, 64).toString("hex");
-
-  // Evita erro se o hash salvo estiver inválido
-  if (key.length !== derivedKey.length) return false;
-
-  return crypto.timingSafeEqual(
-    Buffer.from(key, "hex"),
-    Buffer.from(derivedKey, "hex")
-  );
+  return crypto.timingSafeEqual(Buffer.from(key, "hex"), Buffer.from(derivedKey, "hex"));
 }
 
 export async function registerRoutes(
@@ -59,25 +52,63 @@ export async function registerRoutes(
     res.json({ status: "ok" });
   });
 
-  // Auth (email/senha)
   app.post(api.auth.register.path, async (req: any, res) => {
-    try {
-      const input = api.auth.register.input.parse(req.body);
+    const input = api.auth.register.input.parse(req.body);
+    const existing = await db.select({ id: users.id }).from(users).where(eq(users.email, input.email));
+    if (existing.length > 0) {
+      return res.status(409).json({ message: "E-mail já cadastrado", field: "email" });
+    }
 
-      const existing = await db
-        .select({ id: users.id })
-        .from(users)
-        .where(eq(users.email, input.email));
+    const [firstName, ...rest] = input.name.trim().split(/\s+/);
+    const lastName = rest.join(" ") || null;
+    const passwordHash = hashPassword(input.password);
 
-      if (existing.length > 0) {
-        return res
-          .status(409)
-          .json({ message: "E-mail já cadastrado", field: "email" });
-      }
+    const [user] = await db
+      .insert(users)
+      .values({
+        email: input.email,
+        firstName,
+        lastName,
+        passwordHash,
+      })
+      .returning();
 
-      const [firstName, ...rest] = input.name.trim().split(/\s+/);
-      const lastName = rest.join(" ") || null;
-      const passwordHash = hashPassword(input.password);
+    const [profile] = await db
+      .insert(profiles)
+      .values({
+        userId: user.id,
+        phone: input.phone,
+        role: input.role,
+      })
+      .returning();
+
+    req.session.userId = user.id;
+    req.session.cookie.maxAge = DAY_IN_MS * 7;
+    res.status(201).json({ user, profile });
+  });
+
+  app.post(api.auth.login.path, async (req: any, res) => {
+    const input = api.auth.login.input.parse(req.body);
+    const [user] = await db.select().from(users).where(eq(users.email, input.email));
+
+    if (!user?.passwordHash || !verifyPassword(input.password, user.passwordHash)) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    req.session.userId = user.id;
+    req.session.cookie.maxAge = input.keepConnected ? DAY_IN_MS * 7 : DAY_IN_MS;
+    res.json({ ok: true });
+  });
+
+  app.post(api.auth.logout.path, (req: any, res) => {
+    if (req.session) {
+      req.session.destroy(() => {
+        res.json({ ok: true });
+      });
+      return;
+    }
+    res.json({ ok: true });
+  });
 
       const [user] = await db
         .insert(users)
