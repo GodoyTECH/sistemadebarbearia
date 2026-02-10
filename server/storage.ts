@@ -6,23 +6,23 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getProfile(userId: string): Promise<Profile | undefined>;
   createProfile(profile: any): Promise<Profile>;
-  getServices(): Promise<Service[]>;
-  getService(id: number): Promise<Service | undefined>;
+  getServices(storeId?: number): Promise<Service[]>;
+  getService(id: number, storeId?: number): Promise<Service | undefined>;
   createService(service: any): Promise<Service>;
   
   // Deductions
-  getStandardDeductions(): Promise<StandardDeduction[]>;
+  getStandardDeductions(storeId?: number): Promise<StandardDeduction[]>;
   createStandardDeduction(deduction: any): Promise<StandardDeduction>;
-  getIndividualDeductions(professionalId?: string): Promise<IndividualDeduction[]>;
+  getIndividualDeductions(storeId?: number, professionalId?: string): Promise<IndividualDeduction[]>;
   createIndividualDeduction(deduction: any): Promise<IndividualDeduction>;
 
   // Appointments
-  getAppointments(filters?: { startDate?: string; endDate?: string; professionalId?: string }): Promise<any[]>;
+  getAppointments(filters?: { storeId?: number; startDate?: string; endDate?: string; professionalId?: string }): Promise<any[]>;
   createAppointment(appt: InsertAppointment): Promise<Appointment>;
   updateAppointmentStatus(id: number, status: string): Promise<Appointment>;
 
   // Stats
-  getStats(): Promise<any>;
+  getStats(storeId?: number): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -41,12 +41,18 @@ export class DatabaseStorage implements IStorage {
     return newProfile;
   }
 
-  async getServices(): Promise<Service[]> {
-    return await db.select().from(services).orderBy(services.name);
+  async getServices(storeId?: number): Promise<Service[]> {
+    let query = db.select().from(services).orderBy(services.name);
+    if (storeId) {
+      return await query.where(eq(services.storeId, storeId));
+    }
+    return await query;
   }
 
-  async getService(id: number): Promise<Service | undefined> {
-    const [service] = await db.select().from(services).where(eq(services.id, id));
+  async getService(id: number, storeId?: number): Promise<Service | undefined> {
+    const conditions = [eq(services.id, id)];
+    if (storeId) conditions.push(eq(services.storeId, storeId));
+    const [service] = await db.select().from(services).where(and(...conditions));
     return service;
   }
 
@@ -55,8 +61,10 @@ export class DatabaseStorage implements IStorage {
     return newService;
   }
 
-  async getStandardDeductions(): Promise<StandardDeduction[]> {
-    return await db.select().from(standardDeductions).where(eq(standardDeductions.active, true));
+  async getStandardDeductions(storeId?: number): Promise<StandardDeduction[]> {
+    const conditions = [eq(standardDeductions.active, true)];
+    if (storeId) conditions.push(eq(standardDeductions.storeId, storeId));
+    return await db.select().from(standardDeductions).where(and(...conditions));
   }
 
   async createStandardDeduction(deduction: any): Promise<StandardDeduction> {
@@ -64,12 +72,14 @@ export class DatabaseStorage implements IStorage {
     return newDeduction;
   }
 
-  async getIndividualDeductions(professionalId?: string): Promise<IndividualDeduction[]> {
-    let query = db.select().from(individualDeductions);
-    if (professionalId) {
-      return await query.where(eq(individualDeductions.professionalId, professionalId));
+  async getIndividualDeductions(storeId?: number, professionalId?: string): Promise<IndividualDeduction[]> {
+    const conditions = [];
+    if (storeId) conditions.push(eq(individualDeductions.storeId, storeId));
+    if (professionalId) conditions.push(eq(individualDeductions.professionalId, professionalId));
+    if (conditions.length > 0) {
+      return await db.select().from(individualDeductions).where(and(...conditions));
     }
-    return await query;
+    return await db.select().from(individualDeductions);
   }
 
   async createIndividualDeduction(deduction: any): Promise<IndividualDeduction> {
@@ -77,7 +87,7 @@ export class DatabaseStorage implements IStorage {
     return newDeduction;
   }
 
-  async getAppointments(filters?: { startDate?: string; endDate?: string; professionalId?: string }): Promise<any[]> {
+  async getAppointments(filters?: { storeId?: number; startDate?: string; endDate?: string; professionalId?: string }): Promise<any[]> {
     let query = db.select({
       id: appointments.id,
       professionalId: appointments.professionalId,
@@ -97,6 +107,7 @@ export class DatabaseStorage implements IStorage {
     .orderBy(desc(appointments.date));
 
     const conditions = [];
+    if (filters?.storeId) conditions.push(eq(appointments.storeId, filters.storeId));
     if (filters?.startDate) conditions.push(gte(appointments.date, new Date(filters.startDate)));
     if (filters?.endDate) conditions.push(lte(appointments.date, new Date(filters.endDate)));
     if (filters?.professionalId) conditions.push(eq(appointments.professionalId, filters.professionalId));
@@ -119,12 +130,20 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  async getStats(): Promise<any> {
-    const allAppointments = await db.select().from(appointments);
+  async getStats(storeId?: number): Promise<any> {
+    const appointmentConditions = storeId ? eq(appointments.storeId, storeId) : undefined;
+    const profileConditions = storeId ? eq(profiles.storeId, storeId) : undefined;
+    const allAppointments = appointmentConditions
+      ? await db.select().from(appointments).where(appointmentConditions)
+      : await db.select().from(appointments);
     const allUsers = await db.select().from(users);
-    const allProfiles = await db.select().from(profiles);
-    const standardDeductionsList = await this.getStandardDeductions();
-    const individualDeductionsList = await db.select().from(individualDeductions);
+    const allProfiles = profileConditions
+      ? await db.select().from(profiles).where(profileConditions)
+      : await db.select().from(profiles);
+    const standardDeductionsList = await this.getStandardDeductions(storeId);
+    const individualDeductionsList = storeId
+      ? await db.select().from(individualDeductions).where(eq(individualDeductions.storeId, storeId))
+      : await db.select().from(individualDeductions);
 
     const professionals = allProfiles
       .filter(p => p.role === 'professional')

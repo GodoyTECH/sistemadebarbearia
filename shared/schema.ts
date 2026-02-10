@@ -8,15 +8,24 @@ import { relations } from "drizzle-orm";
 export * from "./models/auth";
 
 // Enums
-export const roleEnum = pgEnum("role", ["admin", "professional"]);
+export const roleEnum = pgEnum("role", ["manager", "professional"]);
 export const serviceTypeEnum = pgEnum("service_type", ["male", "female", "general", "promo"]);
 export const paymentMethodEnum = pgEnum("payment_method", ["cash", "card", "pix"]);
 export const appointmentStatusEnum = pgEnum("appointment_status", ["pending", "confirmed", "rejected"]);
+
+export const salons = pgTable("salons", {
+  id: serial("id").primaryKey(),
+  storeNumber: varchar("store_number", { length: 10 }).notNull().unique(),
+  storeName: text("store_name").notNull(),
+  managerUserId: varchar("manager_user_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
 
 // Profiles table (extends auth users)
 export const profiles = pgTable("profiles", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),
+  storeId: integer("store_id").notNull().references(() => salons.id),
   role: roleEnum("role").default("professional").notNull(),
   cpf: text("cpf"),
   phone: text("phone"),
@@ -26,6 +35,7 @@ export const profiles = pgTable("profiles", {
 // Services (Types of cuts/promotions)
 export const services = pgTable("services", {
   id: serial("id").primaryKey(),
+  storeId: integer("store_id").notNull().references(() => salons.id),
   name: text("name").notNull(),
   type: serviceTypeEnum("type").notNull(),
   price: integer("price").notNull(), // in cents
@@ -37,6 +47,7 @@ export const services = pgTable("services", {
 // Global/Standard Deductions (Descontos Padrão)
 export const standardDeductions = pgTable("standard_deductions", {
   id: serial("id").primaryKey(),
+  storeId: integer("store_id").notNull().references(() => salons.id),
   name: text("name").notNull(),
   amount: integer("amount").notNull(), // in cents
   active: boolean("active").default(true).notNull(),
@@ -45,6 +56,7 @@ export const standardDeductions = pgTable("standard_deductions", {
 // Individual Deductions (Descontos Únicos/Vales)
 export const individualDeductions = pgTable("individual_deductions", {
   id: serial("id").primaryKey(),
+  storeId: integer("store_id").notNull().references(() => salons.id),
   professionalId: varchar("professional_id").notNull().references(() => users.id),
   name: text("name").notNull(),
   amount: integer("amount").notNull(), // in cents
@@ -55,6 +67,7 @@ export const individualDeductions = pgTable("individual_deductions", {
 // Appointments/Cuts
 export const appointments = pgTable("appointments", {
   id: serial("id").primaryKey(),
+  storeId: integer("store_id").notNull().references(() => salons.id),
   professionalId: varchar("professional_id").notNull().references(() => users.id),
   serviceId: integer("service_id").notNull().references(() => services.id),
   date: timestamp("date").defaultNow().notNull(),
@@ -95,12 +108,13 @@ export const appointmentsRelations = relations(appointments, ({ one }) => ({
 }));
 
 // Schemas
-export const insertProfileSchema = createInsertSchema(profiles).omit({ id: true, userId: true });
-export const insertServiceSchema = createInsertSchema(services).omit({ id: true });
-export const insertStandardDeductionSchema = createInsertSchema(standardDeductions).omit({ id: true });
-export const insertIndividualDeductionSchema = createInsertSchema(individualDeductions).omit({ id: true, date: true });
+export const insertProfileSchema = createInsertSchema(profiles).omit({ id: true, userId: true, storeId: true });
+export const insertServiceSchema = createInsertSchema(services).omit({ id: true, storeId: true });
+export const insertStandardDeductionSchema = createInsertSchema(standardDeductions).omit({ id: true, storeId: true });
+export const insertIndividualDeductionSchema = createInsertSchema(individualDeductions).omit({ id: true, storeId: true, date: true });
 export const insertAppointmentSchema = createInsertSchema(appointments).omit({ 
   id: true, 
+  storeId: true,
   professionalId: true, 
   date: true,
   status: true,

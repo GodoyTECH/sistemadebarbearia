@@ -23,7 +23,7 @@ export function AppShell({ children }: AppShellProps) {
   const [location] = useLocation();
   const { logout } = useAuth();
   const { data } = useProfile();
-  const isAdmin = data?.profile?.role === "admin";
+  const isAdmin = data?.profile?.role === "manager";
 
   const links = isAdmin
     ? [
