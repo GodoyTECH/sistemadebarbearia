@@ -1,8 +1,7 @@
 import type { Express } from "express";
-import { createServer, type Server } from "http";
+import { type Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
-import { z } from "zod";
 import { setupAuth, isAuthenticated } from "./replit_integrations/auth";
 import { registerAuthRoutes } from "./replit_integrations/auth";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
@@ -23,7 +22,14 @@ function verifyPassword(password: string, stored: string) {
   const [salt, key] = stored.split(":");
   if (!salt || !key) return false;
   const derivedKey = crypto.scryptSync(password, salt, 64).toString("hex");
-  return crypto.timingSafeEqual(Buffer.from(key, "hex"), Buffer.from(derivedKey, "hex"));
+
+  // Evita erro se o hash salvo estiver inválido
+  if (key.length !== derivedKey.length) return false;
+
+  return crypto.timingSafeEqual(
+    Buffer.from(key, "hex"),
+    Buffer.from(derivedKey, "hex")
+  );
 }
 
 export async function registerRoutes(
@@ -35,57 +41,92 @@ export async function registerRoutes(
   registerAuthRoutes(app);
   registerObjectStorageRoutes(app);
 
+  // Middleware compatível: session auth (local) OU auth Replit
+  const requireAuth = (req: any, res: any, next: any) => {
+    if (req?.session?.userId) {
+      req.authUserId = req.session.userId;
+      return next();
+    }
+
+    return (isAuthenticated as any)(req, res, () => {
+      req.authUserId = req?.user?.claims?.sub;
+      return next();
+    });
+  };
+
   // === API Routes ===
   app.get(api.health.check.path, (_req, res) => {
     res.json({ status: "ok" });
   });
 
+  // Auth (email/senha)
   app.post(api.auth.register.path, async (req: any, res) => {
-    const input = api.auth.register.input.parse(req.body);
-    const existing = await db.select({ id: users.id }).from(users).where(eq(users.email, input.email));
-    if (existing.length > 0) {
-      return res.status(409).json({ message: "E-mail já cadastrado", field: "email" });
+    try {
+      const input = api.auth.register.input.parse(req.body);
+
+      const existing = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.email, input.email));
+
+      if (existing.length > 0) {
+        return res
+          .status(409)
+          .json({ message: "E-mail já cadastrado", field: "email" });
+      }
+
+      const [firstName, ...rest] = input.name.trim().split(/\s+/);
+      const lastName = rest.join(" ") || null;
+      const passwordHash = hashPassword(input.password);
+
+      const [user] = await db
+        .insert(users)
+        .values({
+          email: input.email,
+          firstName,
+          lastName,
+          passwordHash,
+        })
+        .returning();
+
+      const [profile] = await db
+        .insert(profiles)
+        .values({
+          userId: user.id,
+          phone: input.phone,
+          role: input.role,
+        })
+        .returning();
+
+      req.session.userId = user.id;
+      req.session.cookie.maxAge = DAY_IN_MS * 7;
+
+      res.status(201).json({ user, profile });
+    } catch (err) {
+      res.status(400).json({ message: "Dados inválidos para cadastro" });
     }
-
-    const [firstName, ...rest] = input.name.trim().split(/\s+/);
-    const lastName = rest.join(" ") || null;
-    const passwordHash = hashPassword(input.password);
-
-    const [user] = await db
-      .insert(users)
-      .values({
-        email: input.email,
-        firstName,
-        lastName,
-        passwordHash,
-      })
-      .returning();
-
-    const [profile] = await db
-      .insert(profiles)
-      .values({
-        userId: user.id,
-        phone: input.phone,
-        role: input.role,
-      })
-      .returning();
-
-    req.session.userId = user.id;
-    req.session.cookie.maxAge = DAY_IN_MS * 7;
-    res.status(201).json({ user, profile });
   });
 
   app.post(api.auth.login.path, async (req: any, res) => {
-    const input = api.auth.login.input.parse(req.body);
-    const [user] = await db.select().from(users).where(eq(users.email, input.email));
+    try {
+      const input = api.auth.login.input.parse(req.body);
 
-    if (!user?.passwordHash || !verifyPassword(input.password, user.passwordHash)) {
-      return res.status(401).json({ message: "Unauthorized" });
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, input.email));
+
+      if (!user?.passwordHash || !verifyPassword(input.password, user.passwordHash)) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      req.session.userId = user.id;
+      req.session.cookie.maxAge = input.keepConnected ? DAY_IN_MS * 7 : DAY_IN_MS;
+
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(400).json({ message: "Dados inválidos para login" });
     }
-
-    req.session.userId = user.id;
-    req.session.cookie.maxAge = input.keepConnected ? DAY_IN_MS * 7 : DAY_IN_MS;
-    res.json({ ok: true });
   });
 
   app.post(api.auth.logout.path, (req: any, res) => {
@@ -98,79 +139,83 @@ export async function registerRoutes(
     res.json({ ok: true });
   });
 
-  app.get(api.auth.me.path, isAuthenticated, async (req: any, res) => {
-    const userId = req.user.claims.sub;
+  app.get(api.auth.me.path, requireAuth, async (req: any, res) => {
+    const userId = req.authUserId;
     const user = await storage.getUser(userId);
     const profile = await storage.getProfile(userId);
     res.json({ user, profile });
   });
 
-  app.post(api.auth.updateProfile.path, isAuthenticated, async (req: any, res) => {
+  app.post(api.auth.updateProfile.path, requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.authUserId;
       const input = api.auth.updateProfile.input.parse(req.body);
       const profile = await storage.createProfile({ ...input, userId });
       res.json(profile);
-    } catch (err) {
+    } catch (_err) {
       res.status(500).json({ message: "Failed to update profile" });
     }
   });
 
   // Services
-  app.get(api.services.list.path, isAuthenticated, async (req, res) => {
+  app.get(api.services.list.path, requireAuth, async (_req, res) => {
     const srvs = await storage.getServices();
     res.json(srvs);
   });
 
-  app.post(api.services.create.path, isAuthenticated, async (req, res) => {
+  app.post(api.services.create.path, requireAuth, async (req, res) => {
     const input = api.services.create.input.parse(req.body);
     const srv = await storage.createService(input);
     res.status(201).json(srv);
   });
 
   // Deductions
-  app.get(api.deductions.standard.list.path, isAuthenticated, async (req, res) => {
+  app.get(api.deductions.standard.list.path, requireAuth, async (_req, res) => {
     const deds = await storage.getStandardDeductions();
     res.json(deds);
   });
 
-  app.post(api.deductions.standard.create.path, isAuthenticated, async (req, res) => {
+  app.post(api.deductions.standard.create.path, requireAuth, async (req, res) => {
     const input = api.deductions.standard.create.input.parse(req.body);
     const ded = await storage.createStandardDeduction(input);
     res.status(201).json(ded);
   });
 
-  app.get(api.deductions.individual.list.path, isAuthenticated, async (req, res) => {
+  app.get(api.deductions.individual.list.path, requireAuth, async (req, res) => {
     const profId = req.query.professionalId as string | undefined;
     const deds = await storage.getIndividualDeductions(profId);
     res.json(deds);
   });
 
-  app.post(api.deductions.individual.create.path, isAuthenticated, async (req, res) => {
+  app.post(api.deductions.individual.create.path, requireAuth, async (req, res) => {
     const input = api.deductions.individual.create.input.parse(req.body);
     const ded = await storage.createIndividualDeduction(input);
     res.status(201).json(ded);
   });
 
   // Appointments
-  app.get(api.appointments.list.path, isAuthenticated, async (req: any, res) => {
-    const userId = req.user.claims.sub;
+  app.get(api.appointments.list.path, requireAuth, async (req: any, res) => {
+    const userId = req.authUserId;
     const profile = await storage.getProfile(userId);
-    let filters: any = {};
+
+    const filters: any = {};
     if (req.query.startDate) filters.startDate = req.query.startDate;
     if (req.query.endDate) filters.endDate = req.query.endDate;
-    if (profile?.role === 'professional') {
+
+    if (profile?.role === "professional") {
       filters.professionalId = userId;
     } else if (req.query.professionalId) {
       filters.professionalId = req.query.professionalId;
     }
+
     const appts = await storage.getAppointments(filters);
     res.json(appts);
   });
 
-  app.post(api.appointments.create.path, isAuthenticated, async (req: any, res) => {
-    const userId = req.user.claims.sub;
+  app.post(api.appointments.create.path, requireAuth, async (req: any, res) => {
+    const userId = req.authUserId;
     const input = api.appointments.create.input.parse(req.body);
+
     const service = await storage.getService(input.serviceId);
     if (!service) return res.status(404).json({ message: "Service not found" });
 
@@ -179,16 +224,18 @@ export async function registerRoutes(
       professionalId: userId,
       price: service.price,
       commissionRate: service.commissionRate,
-      status: 'pending'
+      status: "pending",
     });
+
     res.status(201).json(appt);
   });
 
   // Stats
-  app.get(api.stats.get.path, isAuthenticated, async (req, res) => {
+  app.get(api.stats.get.path, requireAuth, async (_req, res) => {
     const stats = await storage.getStats();
     res.json(stats);
   });
 
   return httpServer;
 }
+
