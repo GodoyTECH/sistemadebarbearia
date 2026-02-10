@@ -17,7 +17,7 @@ export function Sidebar() {
   const [location] = useLocation();
   const { logout } = useAuth();
   const { data } = useProfile();
-  const isAdmin = data?.profile?.role === "admin";
+  const isAdmin = data?.profile?.role === "manager";
 
   const links = isAdmin ? [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },

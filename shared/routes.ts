@@ -71,7 +71,7 @@ export const api = {
           .min(6)
           .regex(/^(?=.*[A-Za-z])(?=.*\d).{6,}$/),
         phone: z.string().min(10),
-        role: z.enum(["admin", "professional"]),
+        role: z.enum(["manager", "professional"]),
       }),
       responses: {
         201: z.any(),

@@ -22,7 +22,7 @@ const onboardingSchema = z.object({
     .string()
     .min(10, "Telefone inválido")
     .refine((value) => value.replace(/\D/g, "").length >= 10, "Telefone inválido"),
-  role: z.enum(["admin", "professional"]),
+  role: z.enum(["manager", "professional"]),
 });
 
 type OnboardingValues = z.infer<typeof onboardingSchema>;
@@ -45,7 +45,7 @@ export default function Onboarding() {
   });
 
   if (isLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
-  if (data?.profile) return <Redirect to={data.profile.role === "admin" ? "/admin" : "/professional"} />;
+  if (data?.profile) return <Redirect to={data.profile.role === "manager" ? "/admin" : "/professional"} />;
 
   async function onSubmit(values: OnboardingValues) {
     setIsSubmitting(true);
@@ -134,7 +134,7 @@ export default function Onboarding() {
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="professional">Profissional (Barbeiro/Cabeleireiro)</SelectItem>
-                        <SelectItem value="admin">Gerente</SelectItem>
+                        <SelectItem value="manager">Gerente</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

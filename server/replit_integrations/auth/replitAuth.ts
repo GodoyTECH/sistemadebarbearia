@@ -66,6 +66,10 @@ export async function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
+  if (!process.env.REPL_ID) {
+    return;
+  }
+
   const config = await getOidcConfig();
 
   const verify: VerifyFunction = async (
