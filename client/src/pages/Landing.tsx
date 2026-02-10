@@ -11,7 +11,7 @@ export default function Landing() {
 
   if (!isLoading && isAuthenticated) {
     if (!data?.profile) return <Redirect to="/onboarding" />;
-    return <Redirect to={data.profile.role === 'admin' ? '/admin' : '/professional'} />;
+    return <Redirect to={data.profile.role === 'manager' ? '/admin' : '/professional'} />;
   }
 
   return (

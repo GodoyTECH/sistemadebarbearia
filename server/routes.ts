@@ -6,6 +6,25 @@ import { z } from "zod";
 import { setupAuth, isAuthenticated } from "./replit_integrations/auth";
 import { registerAuthRoutes } from "./replit_integrations/auth";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
+import { db } from "./db";
+import { profiles, users } from "@shared/schema";
+import { eq } from "drizzle-orm";
+import crypto from "crypto";
+
+const DAY_IN_MS = 1000 * 60 * 60 * 24;
+
+function hashPassword(password: string) {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const derivedKey = crypto.scryptSync(password, salt, 64).toString("hex");
+  return `${salt}:${derivedKey}`;
+}
+
+function verifyPassword(password: string, stored: string) {
+  const [salt, key] = stored.split(":");
+  if (!salt || !key) return false;
+  const derivedKey = crypto.scryptSync(password, salt, 64).toString("hex");
+  return crypto.timingSafeEqual(Buffer.from(key, "hex"), Buffer.from(derivedKey, "hex"));
+}
 
 export async function registerRoutes(
   httpServer: Server,
@@ -17,6 +36,67 @@ export async function registerRoutes(
   registerObjectStorageRoutes(app);
 
   // === API Routes ===
+  app.get(api.health.check.path, (_req, res) => {
+    res.json({ status: "ok" });
+  });
+
+  app.post(api.auth.register.path, async (req: any, res) => {
+    const input = api.auth.register.input.parse(req.body);
+    const existing = await db.select({ id: users.id }).from(users).where(eq(users.email, input.email));
+    if (existing.length > 0) {
+      return res.status(409).json({ message: "E-mail já cadastrado", field: "email" });
+    }
+
+    const [firstName, ...rest] = input.name.trim().split(/\s+/);
+    const lastName = rest.join(" ") || null;
+    const passwordHash = hashPassword(input.password);
+
+    const [user] = await db
+      .insert(users)
+      .values({
+        email: input.email,
+        firstName,
+        lastName,
+        passwordHash,
+      })
+      .returning();
+
+    const [profile] = await db
+      .insert(profiles)
+      .values({
+        userId: user.id,
+        phone: input.phone,
+        role: input.role,
+      })
+      .returning();
+
+    req.session.userId = user.id;
+    req.session.cookie.maxAge = DAY_IN_MS * 7;
+    res.status(201).json({ user, profile });
+  });
+
+  app.post(api.auth.login.path, async (req: any, res) => {
+    const input = api.auth.login.input.parse(req.body);
+    const [user] = await db.select().from(users).where(eq(users.email, input.email));
+
+    if (!user?.passwordHash || !verifyPassword(input.password, user.passwordHash)) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    req.session.userId = user.id;
+    req.session.cookie.maxAge = input.keepConnected ? DAY_IN_MS * 7 : DAY_IN_MS;
+    res.json({ ok: true });
+  });
+
+  app.post(api.auth.logout.path, (req: any, res) => {
+    if (req.session) {
+      req.session.destroy(() => {
+        res.json({ ok: true });
+      });
+      return;
+    }
+    res.json({ ok: true });
+  });
 
   app.get(api.auth.me.path, isAuthenticated, async (req: any, res) => {
     const userId = req.user.claims.sub;

@@ -3,17 +3,16 @@
 ## Visão Geral
 ```
 / (repo)
-├── backend/           # FastAPI + SQLAlchemy + Alembic
 ├── client/            # React + Vite + Tailwind
+├── server/            # Express + Drizzle ORM (API)
 ├── shared/            # Contratos e schemas compartilhados (types)
 ├── docs/              # Documentação de deploy e migração
 ```
 
 ## Backend
-- **FastAPI** como framework de API.
-- **SQLAlchemy 2.0** para ORM.
-- **Alembic** para migrations.
-- **Pydantic v2** para validação de entrada e saída.
+- **Express** como framework de API.
+- **Drizzle ORM** para acesso ao PostgreSQL.
+- **Zod** para validação de entrada e saída.
 - **RBAC** baseado em `profiles.role`.
 
 ## Frontend
