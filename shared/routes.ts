@@ -37,6 +37,15 @@ export const errorSchemas = {
 };
 
 export const api = {
+  health: {
+    check: {
+      method: 'GET' as const,
+      path: '/api/health' as const,
+      responses: {
+        200: z.object({ status: z.literal('ok') }),
+      },
+    },
+  },
   auth: {
     login: {
       method: 'POST' as const,
@@ -44,10 +53,29 @@ export const api = {
       input: z.object({
         email: z.string().email(),
         password: z.string().min(6),
+        keepConnected: z.boolean().optional(),
       }),
       responses: {
         200: z.any(),
         401: errorSchemas.unauthorized,
+      },
+    },
+    register: {
+      method: 'POST' as const,
+      path: '/api/auth/register' as const,
+      input: z.object({
+        name: z.string().min(2),
+        email: z.string().email(),
+        password: z
+          .string()
+          .min(6)
+          .regex(/^(?=.*[A-Za-z])(?=.*\d).{6,}$/),
+        phone: z.string().min(10),
+        role: z.enum(["admin", "professional"]),
+      }),
+      responses: {
+        201: z.any(),
+        409: errorSchemas.validation,
       },
     },
     logout: {
