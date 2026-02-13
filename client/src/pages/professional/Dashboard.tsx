@@ -218,7 +218,7 @@ export default function ProfessionalDashboard() {
                             <FormItem>
                               <FormLabel>ID da Transação (E2E/NSU/TID)</FormLabel>
                               <FormControl>
-                                <Input placeholder="Informe o identificador" {...field} />
+                                <Input placeholder="Informe o identificador" {...field} value={field.value ?? ""} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>

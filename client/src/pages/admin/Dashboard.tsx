@@ -1,4 +1,5 @@
 import { useStats } from "@/hooks/use-stats";
+import { useProfile } from "@/hooks/use-profile";
 import { AppShell } from "@/components/AppShell";
 import { Currency } from "@/components/Currency";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminDashboard() {
   const { data: stats, isLoading } = useStats();
+  const { data: me } = useProfile();
 
   const chartData = (stats?.revenueByDay || []).map((entry) => ({
     name: entry.day,
@@ -25,7 +27,8 @@ export default function AdminDashboard() {
   return (
     <AppShell>
       <header className="mb-8">
-        <h1 className="text-3xl font-display font-bold text-primary premium-outline">Dashboard Administrativo</h1>
+        <h1 className="text-3xl font-display font-bold text-primary premium-outline">{me?.store?.name || "Dashboard Administrativo"}</h1>
+        {me?.store?.storeCode && <p className="text-sm text-muted-foreground mt-1">ID da loja: {me.store.storeCode}</p>}
         <p className="text-muted-foreground mt-2">Visão geral do desempenho do salão.</p>
       </header>
 

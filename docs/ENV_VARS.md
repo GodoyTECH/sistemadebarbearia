@@ -1,9 +1,21 @@
 # Variáveis de Ambiente
 
-## Backend (Express)
-- `ENV`: local | production
-- `DATABASE_URL`: conexão PostgreSQL (Neon)
-- `PORT`: porta do servidor (default 5000)
+Stack oficial:
+- Frontend: Netlify
+- Backend: Render
+- Banco: Neon PostgreSQL
+- Upload de imagens: Cloudinary
 
-## Frontend (Vite/Netlify)
-- `BACKEND_URL`: URL base do backend usada pelo redirect `/api/*` no Netlify.
+## Backend (Render)
+- `DATABASE_URL`: conexão PostgreSQL (Neon).
+- `SESSION_SECRET`: segredo de sessão usado na autenticação.
+- `NODE_ENV`: `development` | `production`.
+- `PORT`: porta do servidor.
+
+### Upload de imagens (Cloudinary)
+- `CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
+
+## Frontend (Netlify)
+- `BACKEND_URL`: URL pública do backend no Render usada no redirect `/api/*`.

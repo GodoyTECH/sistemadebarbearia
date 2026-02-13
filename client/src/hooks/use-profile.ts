@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, type Profile, type insertProfileSchema } from "@shared/routes";
+import { api, insertProfileSchema } from "@shared/routes";
 import { z } from "zod";
 
 type InsertProfile = z.infer<typeof insertProfileSchema>;

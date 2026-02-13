@@ -1,13 +1,14 @@
-# Deploy Netlify
+# Deploy Netlify + Render
 
 ## Passo a passo
-1. Suba o backend Express (Render, Railway, Fly.io, etc.).
-2. Configure `DATABASE_URL` (Neon) e `PORT` no backend.
-3. No Netlify, aponte o repositório e use o `netlify.toml`.
-4. Defina `BACKEND_URL` no Netlify com o host do backend para o redirect `/api/*`.
+1. Publique o backend no Render.
+2. Configure no backend: `DATABASE_URL` (Neon), `SESSION_SECRET`, `NODE_ENV` e `PORT`.
+3. Configure no backend as credenciais Cloudinary (`CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`) quando o upload estiver habilitado.
+4. No Netlify, conecte este repositório e mantenha o `netlify.toml`.
+5. Defina `BACKEND_URL` no Netlify com a URL pública do backend para o redirect `/api/*`.
 
 ## Variáveis no Netlify
-- `BACKEND_URL`: URL base do backend usada pelos redirects do Netlify.
+- `BACKEND_URL`: URL base do backend.
 
-## Uploads
-- Para produção, recomendamos substituir o upload local por storage (S3, R2, GCS) e ajustar o endpoint `/api/uploads/request-url`.
+## Observação
+- Este projeto não depende de integrações Replit em runtime.

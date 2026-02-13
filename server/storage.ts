@@ -1,4 +1,10 @@
 import { users, profiles, services, appointments, standardDeductions, individualDeductions, type User, type Profile, type Service, type Appointment, type InsertAppointment, type StandardDeduction, type IndividualDeduction } from "@shared/schema";
+
+type CreateAppointmentInput = InsertAppointment & {
+  professionalId: string;
+  commissionRate: number;
+  status: "pending" | "confirmed" | "rejected";
+};
 import { db } from "./db";
 import { eq, and, gte, lte, desc, sql } from "drizzle-orm";
 
@@ -18,7 +24,7 @@ export interface IStorage {
 
   // Appointments
   getAppointments(filters?: { startDate?: string; endDate?: string; professionalId?: string }): Promise<any[]>;
-  createAppointment(appt: InsertAppointment): Promise<Appointment>;
+  createAppointment(appt: CreateAppointmentInput): Promise<Appointment>;
   updateAppointmentStatus(id: number, status: string): Promise<Appointment>;
 
   // Stats
@@ -108,7 +114,7 @@ export class DatabaseStorage implements IStorage {
     return await query;
   }
 
-  async createAppointment(appt: InsertAppointment): Promise<Appointment> {
+  async createAppointment(appt: CreateAppointmentInput): Promise<Appointment> {
     const [newAppt] = await db.insert(appointments).values(appt).returning();
     return newAppt;
   }

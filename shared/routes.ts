@@ -9,7 +9,8 @@ import {
   services, 
   appointments,
   standardDeductions,
-  individualDeductions
+  individualDeductions,
+  stores
 } from './schema';
 
 export { 
@@ -19,6 +20,8 @@ export {
   insertStandardDeductionSchema,
   insertIndividualDeductionSchema
 };
+
+export type { Profile, Service, Appointment, InsertAppointment, Store } from './schema';
 
 export const errorSchemas = {
   validation: z.object({
@@ -72,6 +75,7 @@ export const api = {
           .regex(/^(?=.*[A-Za-z])(?=.*\d).{6,}$/),
         phone: z.string().min(10),
         role: z.enum(["manager", "professional"]),
+        storeName: z.string().min(2).optional(),
       }),
       responses: {
         201: z.any(),
@@ -92,6 +96,7 @@ export const api = {
         200: z.object({
           user: z.any(),
           profile: z.custom<typeof profiles.$inferSelect>().nullable(),
+          store: z.custom<typeof stores.$inferSelect>().nullable(),
         }),
         401: errorSchemas.unauthorized,
       },
