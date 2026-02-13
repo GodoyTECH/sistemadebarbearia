@@ -2,9 +2,7 @@ import type { Express } from "express";
 import { type Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
-import { setupAuth, isAuthenticated } from "./replit_integrations/auth";
-import { registerAuthRoutes } from "./replit_integrations/auth";
-import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
+import { setupAuth, isAuthenticated } from "./auth";
 import { db } from "./db";
 import { profiles, users } from "@shared/schema";
 import { eq } from "drizzle-orm";
@@ -25,90 +23,24 @@ function verifyPassword(password: string, stored: string) {
   return crypto.timingSafeEqual(Buffer.from(key, "hex"), Buffer.from(derivedKey, "hex"));
 }
 
-export async function registerRoutes(
-  httpServer: Server,
-  app: Express
-): Promise<Server> {
-  // Setup Auth
-  await setupAuth(app);
-  registerAuthRoutes(app);
-  registerObjectStorageRoutes(app);
+export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
+  setupAuth(app);
 
-  // Middleware compatível: session auth (local) OU auth Replit
-  const requireAuth = (req: any, res: any, next: any) => {
-    if (req?.session?.userId) {
-      req.authUserId = req.session.userId;
-      return next();
-    }
-
-    return (isAuthenticated as any)(req, res, () => {
-      req.authUserId = req?.user?.claims?.sub;
-      return next();
-    });
-  };
-
-  // === API Routes ===
   app.get(api.health.check.path, (_req, res) => {
     res.json({ status: "ok" });
   });
 
   app.post(api.auth.register.path, async (req: any, res) => {
-    const input = api.auth.register.input.parse(req.body);
-    const existing = await db.select({ id: users.id }).from(users).where(eq(users.email, input.email));
-    if (existing.length > 0) {
-      return res.status(409).json({ message: "E-mail já cadastrado", field: "email" });
-    }
+    try {
+      const input = api.auth.register.input.parse(req.body);
+      const existing = await db.select({ id: users.id }).from(users).where(eq(users.email, input.email));
+      if (existing.length > 0) {
+        return res.status(409).json({ message: "E-mail já cadastrado.", field: "email" });
+      }
 
-    const [firstName, ...rest] = input.name.trim().split(/\s+/);
-    const lastName = rest.join(" ") || null;
-    const passwordHash = hashPassword(input.password);
-
-    const [user] = await db
-      .insert(users)
-      .values({
-        email: input.email,
-        firstName,
-        lastName,
-        passwordHash,
-      })
-      .returning();
-
-    const [profile] = await db
-      .insert(profiles)
-      .values({
-        userId: user.id,
-        phone: input.phone,
-        role: input.role,
-      })
-      .returning();
-
-    req.session.userId = user.id;
-    req.session.cookie.maxAge = DAY_IN_MS * 7;
-    res.status(201).json({ user, profile });
-  });
-
-  app.post(api.auth.login.path, async (req: any, res) => {
-    const input = api.auth.login.input.parse(req.body);
-    const [user] = await db.select().from(users).where(eq(users.email, input.email));
-
-    if (!user?.passwordHash || !verifyPassword(input.password, user.passwordHash)) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    req.session.userId = user.id;
-    req.session.cookie.maxAge = input.keepConnected ? DAY_IN_MS * 7 : DAY_IN_MS;
-    res.json({ ok: true });
-  });
-
-  app.post(api.auth.logout.path, (req: any, res) => {
-    if (req.session) {
-      req.session.destroy(() => {
-        res.json({ ok: true });
-      });
-      return;
-    }
-    res.json({ ok: true });
-  });
+      const [firstName, ...rest] = input.name.trim().split(/\s+/);
+      const lastName = rest.join(" ") || null;
+      const passwordHash = hashPassword(input.password);
 
       const [user] = await db
         .insert(users)
@@ -131,32 +63,26 @@ export async function registerRoutes(
 
       req.session.userId = user.id;
       req.session.cookie.maxAge = DAY_IN_MS * 7;
-
       res.status(201).json({ user, profile });
-    } catch (err) {
-      res.status(400).json({ message: "Dados inválidos para cadastro" });
+    } catch (_err) {
+      res.status(400).json({ message: "Não foi possível concluir o cadastro." });
     }
   });
 
   app.post(api.auth.login.path, async (req: any, res) => {
     try {
       const input = api.auth.login.input.parse(req.body);
-
-      const [user] = await db
-        .select()
-        .from(users)
-        .where(eq(users.email, input.email));
+      const [user] = await db.select().from(users).where(eq(users.email, input.email));
 
       if (!user?.passwordHash || !verifyPassword(input.password, user.passwordHash)) {
-        return res.status(401).json({ message: "Unauthorized" });
+        return res.status(401).json({ message: "E-mail ou senha inválidos." });
       }
 
       req.session.userId = user.id;
       req.session.cookie.maxAge = input.keepConnected ? DAY_IN_MS * 7 : DAY_IN_MS;
-
       res.json({ ok: true });
-    } catch (err) {
-      res.status(400).json({ message: "Dados inválidos para login" });
+    } catch (_err) {
+      res.status(400).json({ message: "Não foi possível fazer login." });
     }
   });
 
@@ -170,62 +96,63 @@ export async function registerRoutes(
     res.json({ ok: true });
   });
 
-  app.get(api.auth.me.path, requireAuth, async (req: any, res) => {
+  app.get(api.auth.me.path, isAuthenticated, async (req: any, res) => {
     const userId = req.authUserId;
     const user = await storage.getUser(userId);
     const profile = await storage.getProfile(userId);
     res.json({ user, profile });
   });
 
-  app.post(api.auth.updateProfile.path, requireAuth, async (req: any, res) => {
+  app.post(api.auth.updateProfile.path, isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.authUserId;
       const input = api.auth.updateProfile.input.parse(req.body);
       const profile = await storage.createProfile({ ...input, userId });
       res.json(profile);
     } catch (_err) {
-      res.status(500).json({ message: "Failed to update profile" });
+      res.status(500).json({ message: "Não foi possível atualizar o perfil." });
     }
   });
 
-  // Services
-  app.get(api.services.list.path, requireAuth, async (_req, res) => {
+  app.post("/api/uploads/request-url", (_req, res) => {
+    res.status(501).json({ message: "Upload de imagem será disponibilizado em breve." });
+  });
+
+  app.get(api.services.list.path, isAuthenticated, async (_req, res) => {
     const srvs = await storage.getServices();
     res.json(srvs);
   });
 
-  app.post(api.services.create.path, requireAuth, async (req, res) => {
+  app.post(api.services.create.path, isAuthenticated, async (req, res) => {
     const input = api.services.create.input.parse(req.body);
     const srv = await storage.createService(input);
     res.status(201).json(srv);
   });
 
-  // Deductions
-  app.get(api.deductions.standard.list.path, requireAuth, async (_req, res) => {
+  app.get(api.deductions.standard.list.path, isAuthenticated, async (_req, res) => {
     const deds = await storage.getStandardDeductions();
     res.json(deds);
   });
 
-  app.post(api.deductions.standard.create.path, requireAuth, async (req, res) => {
+  app.post(api.deductions.standard.create.path, isAuthenticated, async (req, res) => {
     const input = api.deductions.standard.create.input.parse(req.body);
     const ded = await storage.createStandardDeduction(input);
     res.status(201).json(ded);
   });
 
-  app.get(api.deductions.individual.list.path, requireAuth, async (req, res) => {
+  app.get(api.deductions.individual.list.path, isAuthenticated, async (req, res) => {
     const profId = req.query.professionalId as string | undefined;
     const deds = await storage.getIndividualDeductions(profId);
     res.json(deds);
   });
 
-  app.post(api.deductions.individual.create.path, requireAuth, async (req, res) => {
+  app.post(api.deductions.individual.create.path, isAuthenticated, async (req, res) => {
     const input = api.deductions.individual.create.input.parse(req.body);
     const ded = await storage.createIndividualDeduction(input);
     res.status(201).json(ded);
   });
 
-  // Appointments
-  app.get(api.appointments.list.path, requireAuth, async (req: any, res) => {
+  app.get(api.appointments.list.path, isAuthenticated, async (req: any, res) => {
     const userId = req.authUserId;
     const profile = await storage.getProfile(userId);
 
@@ -243,12 +170,12 @@ export async function registerRoutes(
     res.json(appts);
   });
 
-  app.post(api.appointments.create.path, requireAuth, async (req: any, res) => {
+  app.post(api.appointments.create.path, isAuthenticated, async (req: any, res) => {
     const userId = req.authUserId;
     const input = api.appointments.create.input.parse(req.body);
 
     const service = await storage.getService(input.serviceId);
-    if (!service) return res.status(404).json({ message: "Service not found" });
+    if (!service) return res.status(404).json({ message: "Serviço não encontrado." });
 
     const appt = await storage.createAppointment({
       ...input,
@@ -256,17 +183,15 @@ export async function registerRoutes(
       price: service.price,
       commissionRate: service.commissionRate,
       status: "pending",
-    });
+    } as any);
 
     res.status(201).json(appt);
   });
 
-  // Stats
-  app.get(api.stats.get.path, requireAuth, async (_req, res) => {
+  app.get(api.stats.get.path, isAuthenticated, async (_req, res) => {
     const stats = await storage.getStats();
     res.json(stats);
   });
 
   return httpServer;
 }
-
