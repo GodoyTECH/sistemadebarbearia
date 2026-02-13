@@ -13,10 +13,19 @@ export const serviceTypeEnum = pgEnum("service_type", ["male", "female", "genera
 export const paymentMethodEnum = pgEnum("payment_method", ["cash", "card", "pix"]);
 export const appointmentStatusEnum = pgEnum("appointment_status", ["pending", "confirmed", "rejected"]);
 
+export const shops = pgTable("shops", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  code: varchar("code", { length: 12 }).unique().notNull(),
+  managerUserId: varchar("manager_user_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Profiles table (extends auth users)
 export const profiles = pgTable("profiles", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),
+  shopId: integer("shop_id").references(() => shops.id),
   role: roleEnum("role").default("professional").notNull(),
   cpf: text("cpf"),
   phone: text("phone"),
@@ -74,6 +83,17 @@ export const profilesRelations = relations(profiles, ({ one }) => ({
     fields: [profiles.userId],
     references: [users.id],
   }),
+  shop: one(shops, {
+    fields: [profiles.shopId],
+    references: [shops.id],
+  }),
+}));
+
+export const shopsRelations = relations(shops, ({ one }) => ({
+  manager: one(users, {
+    fields: [shops.managerUserId],
+    references: [users.id],
+  }),
 }));
 
 export const individualDeductionsRelations = relations(individualDeductions, ({ one }) => ({
@@ -110,6 +130,7 @@ export const insertAppointmentSchema = createInsertSchema(appointments).omit({
 
 // Types
 export type Profile = typeof profiles.$inferSelect;
+export type Shop = typeof shops.$inferSelect;
 export type Service = typeof services.$inferSelect;
 export type StandardDeduction = typeof standardDeductions.$inferSelect;
 export type IndividualDeduction = typeof individualDeductions.$inferSelect;

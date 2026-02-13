@@ -11,4 +11,4 @@
 - `BACKEND_URL`: URL base do backend.
 
 ## Observação
-- Este projeto não depende de integrações Replit em runtime.
+- Este projeto usa Netlify (frontend), Render (backend) e Neon (PostgreSQL) como stack oficial.

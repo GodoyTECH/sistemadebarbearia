@@ -9,7 +9,8 @@ import {
   services, 
   appointments,
   standardDeductions,
-  individualDeductions
+  individualDeductions,
+  shops,
 } from './schema';
 
 export { 
@@ -65,16 +66,20 @@ export const api = {
     register: {
       method: 'POST' as const,
       path: '/api/auth/register' as const,
-      input: z.object({
-        name: z.string().min(2),
-        email: z.string().email(),
-        password: z
-          .string()
-          .min(6)
-          .regex(/^(?=.*[A-Za-z])(?=.*\d).{6,}$/),
-        phone: z.string().min(10),
-        role: z.enum(["manager", "professional"]),
-      }),
+      input: z.discriminatedUnion("role", [
+        z.object({
+          role: z.literal("manager"),
+          managerName: z.string().min(2),
+          shopName: z.string().min(2),
+          emailPrefix: z.string().min(3),
+          phone: z.string().min(10),
+          password: z.string().min(8).regex(/^[A-Za-z0-9]+$/),
+          confirmPassword: z.string().min(8),
+        }),
+        z.object({
+          role: z.literal("professional"),
+        }),
+      ]),
       responses: {
         201: z.any(),
         409: errorSchemas.validation,
@@ -94,6 +99,7 @@ export const api = {
         200: z.object({
           user: z.any(),
           profile: z.custom<typeof profiles.$inferSelect>().nullable(),
+          shop: z.custom<typeof shops.$inferSelect>().nullable(),
         }),
         401: errorSchemas.unauthorized,
       },
