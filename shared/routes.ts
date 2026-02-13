@@ -20,6 +20,8 @@ export {
   insertIndividualDeductionSchema
 };
 
+export type { Profile, Service, Appointment, InsertAppointment } from './schema';
+
 export const errorSchemas = {
   validation: z.object({
     message: z.string(),
