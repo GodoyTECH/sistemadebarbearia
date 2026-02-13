@@ -1,0 +1,13 @@
+# Variáveis finais
+
+## Backend
+- `DATABASE_URL`
+- `SESSION_SECRET`
+- `NODE_ENV`
+- `PORT`
+- `CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
+
+## Frontend
+- `BACKEND_URL`
