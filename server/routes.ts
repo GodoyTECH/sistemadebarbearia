@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { setupAuth, isAuthenticated } from "./auth";
 import { db } from "./db";
-import { profiles, users } from "@shared/schema";
+import { profiles, shops, users } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import crypto from "crypto";
 
@@ -33,22 +33,45 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.post(api.auth.register.path, async (req: any, res) => {
     try {
       const input = api.auth.register.input.parse(req.body);
-      const existing = await db.select({ id: users.id }).from(users).where(eq(users.email, input.email));
+
+      if (input.role === "professional") {
+        return res.status(501).json({
+          message: "Cadastro de profissional será liberado em breve.",
+          field: "role",
+        });
+      }
+
+      const email = `${input.emailPrefix.toLowerCase()}@luxic.com`;
+      const existing = await db.select({ id: users.id }).from(users).where(eq(users.email, email));
       if (existing.length > 0) {
         return res.status(409).json({ message: "E-mail já cadastrado.", field: "email" });
       }
 
-      const [firstName, ...rest] = input.name.trim().split(/\s+/);
+      if (input.password !== input.confirmPassword) {
+        return res.status(400).json({ message: "Confirmação de senha diferente da senha.", field: "confirmPassword" });
+      }
+
+      const [firstName, ...rest] = input.managerName.trim().split(/\s+/);
       const lastName = rest.join(" ") || null;
       const passwordHash = hashPassword(input.password);
+      const shopCode = `LX-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
 
       const [user] = await db
         .insert(users)
         .values({
-          email: input.email,
+          email,
           firstName,
           lastName,
           passwordHash,
+        })
+        .returning();
+
+      const [shop] = await db
+        .insert(shops)
+        .values({
+          name: input.shopName,
+          code: shopCode,
+          managerUserId: user.id,
         })
         .returning();
 
@@ -57,13 +80,14 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         .values({
           userId: user.id,
           phone: input.phone,
-          role: input.role,
+          role: "manager",
+          shopId: shop.id,
         })
         .returning();
 
       req.session.userId = user.id;
       req.session.cookie.maxAge = DAY_IN_MS * 7;
-      res.status(201).json({ user, profile });
+      res.status(201).json({ user, profile, shop });
     } catch (_err) {
       res.status(400).json({ message: "Não foi possível concluir o cadastro." });
     }
@@ -100,7 +124,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const userId = req.authUserId;
     const user = await storage.getUser(userId);
     const profile = await storage.getProfile(userId);
-    res.json({ user, profile });
+    const [shop] = profile?.shopId
+      ? await db.select().from(shops).where(eq(shops.id, profile.shopId))
+      : [null];
+    res.json({ user, profile, shop: shop ?? null });
   });
 
   app.post(api.auth.updateProfile.path, isAuthenticated, async (req: any, res) => {

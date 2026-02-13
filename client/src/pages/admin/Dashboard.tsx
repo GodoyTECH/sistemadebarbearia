@@ -1,4 +1,5 @@
 import { useStats } from "@/hooks/use-stats";
+import { useProfile } from "@/hooks/use-profile";
 import { AppShell } from "@/components/AppShell";
 import { Currency } from "@/components/Currency";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminDashboard() {
   const { data: stats, isLoading } = useStats();
+  const { data: me } = useProfile();
 
   const chartData = (stats?.revenueByDay || []).map((entry) => ({
     name: entry.day,
@@ -27,6 +29,12 @@ export default function AdminDashboard() {
       <header className="mb-8">
         <h1 className="text-3xl font-display font-bold text-primary premium-outline">Dashboard Administrativo</h1>
         <p className="text-muted-foreground mt-2">Visão geral do desempenho do salão.</p>
+        {me?.shop && (
+          <div className="mt-3">
+            <p className="text-lg font-semibold">{me.shop.name}</p>
+            <p className="text-sm text-muted-foreground">ID da loja: {me.shop.code}</p>
+          </div>
+        )}
       </header>
 
         {/* Stats Grid */}
