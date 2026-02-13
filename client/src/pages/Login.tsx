@@ -13,7 +13,7 @@ import { useEffect } from "react";
 
 const loginSchema = z.object({
   email: z.string().email("Informe um e-mail válido"),
-  password: z.string().min(6, "Senha inválida"),
+  password: z.string().min(8, "Senha inválida"),
   keepConnected: z.boolean().optional(),
   rememberData: z.boolean().optional(),
 });
@@ -50,7 +50,8 @@ export default function Login() {
     });
 
     if (!res.ok) {
-      setError("Credenciais inválidas. Verifique e tente novamente.");
+      const payload = await res.json().catch(() => null);
+      setError(payload?.message ?? "Credenciais inválidas. Verifique e tente novamente.");
       setIsSubmitting(false);
       return;
     }

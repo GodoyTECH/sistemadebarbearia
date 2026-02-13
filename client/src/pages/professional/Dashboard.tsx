@@ -13,9 +13,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { insertAppointmentSchema } from "@shared/routes";
-import { Loader2, Upload, CheckCircle } from "lucide-react";
+import { Loader2, CheckCircle } from "lucide-react";
 import { Currency } from "@/components/Currency";
-import { ObjectUploader } from "@/components/ObjectUploader";
 
 const formSchema = insertAppointmentSchema.extend({
   serviceId: z.coerce.number().min(1, "Selecione um serviço"),
@@ -31,7 +30,7 @@ export default function ProfessionalDashboard() {
   
   // Custom upload state
   const [uploadedProof, setUploadedProof] = useState<string | null>(null);
-  const [pendingUploadUrl, setPendingUploadUrl] = useState<string | null>(null);
+  const [availability, setAvailability] = useState(true);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -48,14 +47,38 @@ export default function ProfessionalDashboard() {
   const selectedServiceId = form.watch("serviceId");
 
   useEffect(() => {
+    fetch("/api/me", { credentials: "include" }).then((r) => r.ok ? r.json() : null).then((d) => { if (d?.profile) setAvailability(Boolean(d.profile.availability)); });
+
+
     if (paymentMethod === "cash") {
       form.setValue("transactionId", "");
       setUploadedProof(null);
-      setPendingUploadUrl(null);
+
     }
   }, [paymentMethod, form]);
   
   // Update price when service changes
+
+  const uploadReceipt = async (file?: File) => {
+    if (!file) return;
+    const dataBase64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error("Falha ao ler arquivo"));
+      reader.readAsDataURL(file);
+    });
+    const res = await fetch("/api/uploads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ type: "receipt", dataBase64 }),
+    });
+    const payload = await res.json();
+    if (!res.ok) throw new Error(payload?.message || "Falha no upload");
+    setUploadedProof(payload.secure_url);
+    toast({ title: "Comprovante enviado com sucesso!" });
+  };
+
   const handleServiceChange = (val: string) => {
     const serviceId = parseInt(val);
     form.setValue("serviceId", serviceId);
@@ -65,31 +88,6 @@ export default function ProfessionalDashboard() {
     }
   };
 
-  const getUploadParameters = async (file: any) => {
-    const res = await fetch("/api/uploads/request-url", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: file.name,
-        size: file.size,
-        contentType: file.type,
-      }),
-    });
-    const { uploadURL, fileUrl } = await res.json();
-    setPendingUploadUrl(fileUrl);
-    return {
-      method: "PUT" as const,
-      url: uploadURL,
-      headers: { "Content-Type": file.type },
-    };
-  };
-
-  const onUploadComplete = (result: any) => {
-    if (result.successful && result.successful.length > 0) {
-      if (pendingUploadUrl) setUploadedProof(pendingUploadUrl);
-      toast({ title: "Comprovante enviado com sucesso!" });
-    }
-  };
 
   function onSubmit(values: FormValues) {
     if (paymentMethod !== 'cash' && (!uploadedProof || !form.watch("transactionId"))) {
@@ -107,7 +105,7 @@ export default function ProfessionalDashboard() {
         toast({ title: "Corte registrado com sucesso!" });
         form.reset();
         setUploadedProof(null);
-        setPendingUploadUrl(null);
+
       }
     });
   }
@@ -117,6 +115,9 @@ export default function ProfessionalDashboard() {
       <header className="mb-8">
         <h1 className="text-3xl font-display font-bold text-primary premium-outline">Registrar Corte</h1>
         <p className="text-muted-foreground mt-2">Olá, {user?.firstName}. Vamos registrar um novo atendimento?</p>
+        <Button variant={availability ? "default" : "outline"} className="mt-4" onClick={async () => { const next = !availability; setAvailability(next); await fetch("/api/professional/availability", { method: "PATCH", headers: {"Content-Type":"application/json"}, credentials:"include", body: JSON.stringify({ availability: next }) }); }}>
+          {availability ? "Disponível" : "Indisponível"}
+        </Button>
       </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -225,16 +226,7 @@ export default function ProfessionalDashboard() {
                           )}
                         />
                         
-                        <ObjectUploader
-                          onGetUploadParameters={getUploadParameters}
-                          onComplete={onUploadComplete}
-                          buttonClassName="w-full bg-card border border-input hover:bg-accent/10 text-foreground shadow-sm"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Upload className="w-4 h-4" />
-                            {uploadedProof ? "Substituir Comprovante" : "Fazer Upload do Comprovante"}
-                          </div>
-                        </ObjectUploader>
+                        <Input type="file" accept="image/*" onChange={(e) => uploadReceipt(e.target.files?.[0])} />
                         <p className="text-xs text-muted-foreground">
                           Necessário para pagamentos via Pix ou Cartão para conferência do caixa.
                         </p>
