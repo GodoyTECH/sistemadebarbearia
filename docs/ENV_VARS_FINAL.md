@@ -1,13 +1,15 @@
 # Variáveis finais
 
-## Backend
+## Backend (Render/FastAPI)
 - `DATABASE_URL`
-- `SESSION_SECRET`
-- `NODE_ENV`
-- `PORT`
+- `SECRET_KEY`
+- `ACCESS_TOKEN_EXPIRE_MINUTES`
+- `ALLOWED_ORIGINS`
 - `CLOUDINARY_CLOUD_NAME`
 - `CLOUDINARY_API_KEY`
 - `CLOUDINARY_API_SECRET`
+- `PORT`
+- `ENV`
 
-## Frontend
+## Frontend (Netlify)
 - `BACKEND_URL`

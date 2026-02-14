@@ -15,7 +15,7 @@ from app.api.appointments import router as appointments_router
 from app.api.stats import router as stats_router
 from app.api.uploads import router as uploads_router
 
-app = FastAPI(title="Sistema de Barbearia API")
+app = FastAPI(title="Luxe API")
 
 origins = [origin.strip() for origin in settings.allowed_origins.split(",") if origin.strip()]
 app.add_middleware(
@@ -55,6 +55,16 @@ def ensure_admin():
             db.commit()
     finally:
         db.close()
+
+
+@app.get("/healthz")
+def healthz():
+    return {"status": "ok"}
+
+
+@app.get("/api/health")
+def api_health():
+    return {"status": "ok"}
 
 
 @app.api_route("/api/login", methods=["GET", "POST"])

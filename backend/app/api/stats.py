@@ -3,12 +3,12 @@ from collections import defaultdict
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db, require_admin
+from app.api.deps import get_db, require_manager
 from app.models.appointment import Appointment
 from app.models.user import User
 from app.schemas.stats import StatsResponse, ProfessionalStats, RevenueByDay
 
-router = APIRouter(prefix="/api/stats", tags=["stats"], dependencies=[Depends(require_admin)])
+router = APIRouter(prefix="/api/stats", tags=["stats"], dependencies=[Depends(require_manager)])
 
 
 @router.get("", response_model=StatsResponse)

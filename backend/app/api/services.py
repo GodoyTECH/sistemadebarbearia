@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db, require_admin, get_current_user
+from app.api.deps import get_db, require_manager, get_current_user
 from app.models.user import User
 from app.models.service import Service
 from app.schemas.service import ServiceBase, ServiceCreate, ServiceUpdate
@@ -26,7 +26,7 @@ def list_services(db: Session = Depends(get_db), _user: User = Depends(get_curre
     ]
 
 
-@router.post("", response_model=ServiceBase, status_code=201, dependencies=[Depends(require_admin)])
+@router.post("", response_model=ServiceBase, status_code=201, dependencies=[Depends(require_manager)])
 def create_service(payload: ServiceCreate, db: Session = Depends(get_db)):
     service = Service(
         name=payload.name,
@@ -50,7 +50,7 @@ def create_service(payload: ServiceCreate, db: Session = Depends(get_db)):
     )
 
 
-@router.patch("/{service_id}", response_model=ServiceBase, dependencies=[Depends(require_admin)])
+@router.patch("/{service_id}", response_model=ServiceBase, dependencies=[Depends(require_manager)])
 def update_service(service_id: int, payload: ServiceUpdate, db: Session = Depends(get_db)):
     service = db.query(Service).filter(Service.id == service_id).first()
     if not service:
@@ -70,7 +70,7 @@ def update_service(service_id: int, payload: ServiceUpdate, db: Session = Depend
     )
 
 
-@router.delete("/{service_id}", status_code=204, dependencies=[Depends(require_admin)])
+@router.delete("/{service_id}", status_code=204, dependencies=[Depends(require_manager)])
 def delete_service(service_id: int, db: Session = Depends(get_db)):
     service = db.query(Service).filter(Service.id == service_id).first()
     if not service:

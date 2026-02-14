@@ -2,15 +2,17 @@
 
 Stack oficial:
 - Frontend: Netlify
-- Backend: Render
+- Backend: Render (Python/FastAPI)
 - Banco: Neon PostgreSQL
-- Upload de imagens: Cloudinary
+- Mídia: Cloudinary
 
 ## Backend (Render)
-- `DATABASE_URL`: conexão PostgreSQL (Neon).
-- `SESSION_SECRET`: segredo de sessão usado na autenticação.
-- `NODE_ENV`: `development` | `production`.
-- `PORT`: porta do servidor.
+- `DATABASE_URL`: conexão PostgreSQL do Neon.
+- `SECRET_KEY`: segredo para JWT/cookies de autenticação.
+- `ACCESS_TOKEN_EXPIRE_MINUTES`: tempo de expiração do token.
+- `ALLOWED_ORIGINS`: lista separada por vírgula de origens CORS.
+- `PORT`: porta fornecida pelo Render.
+- `ENV`: `local` ou `production`.
 
 ### Upload de imagens (Cloudinary)
 - `CLOUDINARY_CLOUD_NAME`
@@ -18,4 +20,4 @@ Stack oficial:
 - `CLOUDINARY_API_SECRET`
 
 ## Frontend (Netlify)
-- `BACKEND_URL`: URL pública do backend no Render usada no redirect `/api/*`.
+- `BACKEND_URL`: URL pública do backend no Render (quando não usar proxy local `/api`).
