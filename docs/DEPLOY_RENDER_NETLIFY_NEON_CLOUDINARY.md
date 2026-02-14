@@ -11,10 +11,11 @@
    ```bash
    uvicorn app.main:app --host 0.0.0.0 --port $PORT
    ```
-5. Defina as variáveis em `docs/ENV_VARS_FINAL.md`.
-6. Aplique as migrações antes do primeiro tráfego:
+5. Health Check Path: `/healthz`
+6. Defina as variáveis em `docs/ENV_VARS_FINAL.md`.
+7. Aplique as migrações antes do primeiro tráfego (sem etapa oculta):
    ```bash
-   alembic upgrade head
+   cd backend && alembic upgrade head
    ```
 
 ## Frontend (Netlify)

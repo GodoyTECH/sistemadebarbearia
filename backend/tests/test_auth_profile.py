@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
+from sqlalchemy.pool import StaticPool
 from sqlalchemy.orm import sessionmaker
 
 from app.main import app
@@ -8,7 +9,11 @@ from app.api.deps import get_db
 
 
 def setup_test_db():
-    engine = create_engine("sqlite+pysqlite:///:memory:", connect_args={"check_same_thread": False})
+    engine = create_engine(
+        "sqlite+pysqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
     testing_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     Base.metadata.create_all(bind=engine)
     return testing_session_local
