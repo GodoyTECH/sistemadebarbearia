@@ -12,5 +12,5 @@ class AuditLog(Base):
     actor_id: Mapped[str] = mapped_column(String, ForeignKey("users.id"))
     appointment_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("appointments.id"))
     action: Mapped[str] = mapped_column(String)
-    metadata: Mapped[str | None] = mapped_column(Text)
+    metadata_json: Mapped[str | None] = mapped_column("metadata", Text)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
