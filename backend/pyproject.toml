@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "sistemadebarbearia-backend"
 version = "0.1.0"
 description = "FastAPI backend for Sistema de Barbearia"
-requires-python = ">=3.11,<3.14"
+requires-python = ">=3.11,<3.15"
 dependencies = [
   "fastapi==0.115.6",
   "uvicorn[standard]==0.30.6",
