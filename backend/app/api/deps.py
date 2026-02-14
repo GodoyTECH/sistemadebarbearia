@@ -26,14 +26,17 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     return user
 
 
-def get_current_profile(
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-) -> Profile | None:
+def get_current_profile(user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> Profile | None:
     return db.query(Profile).filter(Profile.user_id == user.id).first()
 
 
-def require_admin(profile: Profile | None = Depends(get_current_profile)) -> Profile:
-    if not profile or profile.role != "admin":
+def require_manager(profile: Profile | None = Depends(get_current_profile)) -> Profile:
+    if not profile or profile.role != "manager":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
+    return profile
+
+
+def require_active_professional(profile: Profile | None = Depends(get_current_profile)) -> Profile:
+    if not profile or profile.role != "professional" or profile.approval_status != "active":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Aguardando aprovação para acessar o painel.")
     return profile

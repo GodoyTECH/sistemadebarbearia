@@ -7,15 +7,21 @@ class ProfileBase(BaseModel):
 
     id: int
     userId: str
-    role: Literal["admin", "professional"]
+    shopId: int | None = None
+    role: Literal["manager", "professional"]
     cpf: str | None = None
     phone: str | None = None
     isVerified: bool
+    approvalStatus: Literal["pending_approval", "active", "rejected"]
+    approvedByUserId: str | None = None
+    approvalAt: str | None = None
+    rejectionAt: str | None = None
+    availability: bool
 
 
 class ProfileUpsert(BaseModel):
-    role: str
-    cpf: str
+    role: Literal["manager", "professional"]
+    cpf: str | None = None
     phone: str
 
     @field_validator("phone")
