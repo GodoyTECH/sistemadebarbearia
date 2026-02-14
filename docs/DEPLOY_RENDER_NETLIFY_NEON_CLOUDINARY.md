@@ -12,8 +12,9 @@
    uvicorn app.main:app --host 0.0.0.0 --port $PORT
    ```
 5. Health Check Path: `/healthz`
-6. Defina as variáveis em `docs/ENV_VARS_FINAL.md`.
-7. Aplique as migrações antes do primeiro tráfego (sem etapa oculta):
+6. Runtime Python (fallback estável): use `backend/runtime.txt` (`python-3.13.11`) para evitar falhas de wheel em versões recentes do ecossistema.
+7. Defina as variáveis em `docs/ENV_VARS_FINAL.md`.
+8. Aplique as migrações antes do primeiro tráfego (sem etapa oculta):
    ```bash
    cd backend && alembic upgrade head
    ```

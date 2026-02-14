@@ -10,6 +10,7 @@
 - `CLOUDINARY_API_SECRET`
 - `PORT`
 - `ENV`
+- `PYTHON_VERSION` (opcional no Render; usar `3.13.11` se não respeitar `runtime.txt`)
 
 ## Frontend (Netlify)
 - `BACKEND_URL`
