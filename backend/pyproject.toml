@@ -36,3 +36,4 @@ addopts = "-q"
 where = ["."]
 include = ["app*"]
 exclude = ["alembic*", "tests*"]
+
