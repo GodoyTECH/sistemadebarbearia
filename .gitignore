@@ -3,3 +3,6 @@ node_modules/
 .venv/
 __pycache__/
 backend/uploads/
+
+# Local Netlify folder
+.netlify

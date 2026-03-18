@@ -13,6 +13,21 @@ class Settings(BaseSettings):
     admin_email: str | None = None
     admin_password: str | None = None
 
+    # Bootstrap seed (produção/local): cria usuários e loja de teste se não existirem
+    seed_bootstrap_enabled: bool = True
+    seed_admin_email: str = "admin@luxe.com"
+    seed_admin_password: str = "AdminLuxe2026"
+    seed_admin_first_name: str = "Admin"
+    seed_admin_last_name: str = "Luxe"
+
+    seed_shop_name: str = "Luxe Barbearia Teste"
+    seed_shop_code: str = "LUXETEST01"
+
+    seed_prof_email: str = "profissional@luxe.com"
+    seed_prof_password: str = "ProfLuxe2026"
+    seed_prof_first_name: str = "Profissional"
+    seed_prof_last_name: str = "Teste"
+
     cloudinary_cloud_name: str | None = None
     cloudinary_api_key: str | None = None
     cloudinary_api_secret: str | None = None
