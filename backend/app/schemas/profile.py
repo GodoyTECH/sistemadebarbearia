@@ -31,3 +31,7 @@ class ProfileUpsert(BaseModel):
         if len(digits) < 10:
             raise ValueError("Telefone inválido")
         return value
+
+
+class ProfessionalAvailabilityUpdate(BaseModel):
+    availability: bool

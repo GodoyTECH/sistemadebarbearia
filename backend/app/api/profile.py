@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, get_current_user, get_current_profile
 from app.models.profile import Profile
 from app.models.shop import Shop
-from app.schemas.profile import ProfileBase, ProfileUpsert
+from app.schemas.profile import ProfileBase, ProfileUpsert, ProfessionalAvailabilityUpdate
 from app.schemas.user import UserBase
 from app.schemas.shop import ShopBase
 from app.models.user import User
@@ -54,6 +54,22 @@ def upsert_profile(payload: ProfileUpsert, user: User = Depends(get_current_user
     else:
         profile = Profile(user_id=user.id, role=payload.role, cpf=payload.cpf, phone=payload.phone, is_verified=False)
         db.add(profile)
+    db.commit()
+    db.refresh(profile)
+    return to_profile_base(profile)
+
+
+@router.patch("/api/professional/availability", response_model=ProfileBase)
+def set_professional_availability(
+    payload: ProfessionalAvailabilityUpdate,
+    user: User = Depends(get_current_user),
+    profile: Profile | None = Depends(get_current_profile),
+    db: Session = Depends(get_db),
+):
+    if not profile or profile.role != "professional":
+        raise HTTPException(status_code=403, detail={"message": "Apenas profissional pode alterar disponibilidade."})
+
+    profile.availability = payload.availability
     db.commit()
     db.refresh(profile)
     return to_profile_base(profile)
