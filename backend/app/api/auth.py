@@ -8,6 +8,7 @@ from app.api.deps import get_db, get_current_user, get_current_profile, require_
 from app.core.security import create_access_token, verify_password, get_password_hash
 from app.core.config import settings
 from app.core.rate_limiter import RateLimiter
+from app.core.uuid_utils import normalize_uuid_str
 from app.models.user import User
 from app.models.shop import Shop
 from app.models.profile import Profile
@@ -181,6 +182,7 @@ def decide_professional(
     manager_profile: Profile = Depends(require_manager),
     db: Session = Depends(get_db),
 ):
+    professional_user_id = normalize_uuid_str(professional_user_id, field_name="professional_user_id")
     target = db.query(Profile).filter(Profile.user_id == professional_user_id).first()
     if not target or target.role != "professional":
         raise HTTPException(status_code=404, detail={"message": "Profissional não encontrado."})

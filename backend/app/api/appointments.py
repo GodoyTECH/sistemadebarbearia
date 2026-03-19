@@ -7,6 +7,7 @@ from app.models.appointment import Appointment
 from app.models.service import Service
 from app.schemas.appointment import AppointmentBase, AppointmentCreate, AppointmentStatusUpdate
 from app.models.user import User
+from app.core.uuid_utils import normalize_uuid_str
 
 router = APIRouter(prefix="/api/appointments", tags=["appointments"])
 
@@ -46,6 +47,7 @@ def list_appointments(
     if profile.role == "professional":
         query = query.filter(Appointment.professional_id == user.id)
     elif professional_id:
+        professional_id = normalize_uuid_str(professional_id, field_name="professionalId")
         query = query.filter(Appointment.professional_id == professional_id)
 
     if start_date:

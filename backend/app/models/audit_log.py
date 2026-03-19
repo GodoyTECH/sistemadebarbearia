@@ -1,6 +1,7 @@
 from datetime import datetime
 from sqlalchemy import String, Integer, DateTime, ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 
 from app.db.base import Base
 
@@ -9,7 +10,7 @@ class AuditLog(Base):
     __tablename__ = "audit_logs"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    actor_id: Mapped[str] = mapped_column(String, ForeignKey("users.id"))
+    actor_id: Mapped[str] = mapped_column(PGUUID(as_uuid=False), ForeignKey("users.id"))
     appointment_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("appointments.id"))
     action: Mapped[str] = mapped_column(String)
     metadata_json: Mapped[str | None] = mapped_column("metadata", Text)

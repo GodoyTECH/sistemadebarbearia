@@ -1,3 +1,4 @@
+import logging
 import os
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,6 +17,8 @@ from app.api.services import router as services_router
 from app.api.appointments import router as appointments_router
 from app.api.stats import router as stats_router
 from app.api.uploads import router as uploads_router
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Luxe API")
 
@@ -130,6 +133,9 @@ def ensure_seed_data():
             professional_profile.approved_by_user_id = admin.id
 
         db.commit()
+    except Exception:
+        db.rollback()
+        logger.exception("Seed bootstrap failed during startup; app will continue without seed data.")
     finally:
         db.close()
 

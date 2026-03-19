@@ -5,6 +5,7 @@ from app.core.security import decode_access_token
 from app.db.session import SessionLocal
 from app.models.user import User
 from app.models.profile import Profile
+from app.core.uuid_utils import normalize_uuid_str
 
 
 def get_db():
@@ -19,7 +20,12 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     token = request.cookies.get("access_token")
     if not token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-    user_id = decode_access_token(token)
+    user_id = normalize_uuid_str(
+        decode_access_token(token),
+        field_name="token subject",
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        message="Invalid token",
+    )
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")

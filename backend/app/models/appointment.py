@@ -1,6 +1,7 @@
 from datetime import datetime
 from sqlalchemy import String, Integer, DateTime, ForeignKey, Boolean, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 
 from app.db.base import Base
 
@@ -9,7 +10,7 @@ class Appointment(Base):
     __tablename__ = "appointments"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    professional_id: Mapped[str] = mapped_column(String, ForeignKey("users.id"), index=True)
+    professional_id: Mapped[str] = mapped_column(PGUUID(as_uuid=False), ForeignKey("users.id"), index=True)
     service_id: Mapped[int] = mapped_column(Integer, ForeignKey("services.id"))
     date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     customer_name: Mapped[str] = mapped_column(String)

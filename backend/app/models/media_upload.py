@@ -1,6 +1,7 @@
 from datetime import datetime
 from sqlalchemy import String, Integer, DateTime, ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 
 from app.db.base import Base
 
@@ -11,7 +12,7 @@ class MediaUpload(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     type: Mapped[str] = mapped_column(String(16))
     shop_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("shops.id"), index=True)
-    professional_id: Mapped[str | None] = mapped_column(String, ForeignKey("users.id"), index=True)
+    professional_id: Mapped[str | None] = mapped_column(PGUUID(as_uuid=False), ForeignKey("users.id"), index=True)
     payment_id: Mapped[int | None] = mapped_column(Integer)
     secure_url: Mapped[str] = mapped_column(Text)
     public_id: Mapped[str] = mapped_column(Text)
