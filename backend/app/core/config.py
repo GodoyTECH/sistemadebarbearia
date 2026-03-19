@@ -1,4 +1,16 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def normalize_database_url(url: str) -> str:
+    """Force SQLAlchemy to use psycopg when URL comes without explicit driver."""
+    if url.startswith("postgres://"):
+        return "postgresql+psycopg://" + url[len("postgres://") :]
+
+    if url.startswith("postgresql://"):
+        return "postgresql+psycopg://" + url[len("postgresql://") :]
+
+    return url
 
 
 class Settings(BaseSettings):
@@ -9,6 +21,13 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60 * 24
     database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/sistemadebarbearia"
     allowed_origins: str = "http://localhost:5173"
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def _normalize_database_url(cls, value: str) -> str:
+        if not isinstance(value, str):
+            return value
+        return normalize_database_url(value)
     upload_dir: str = "./backend/uploads"
     admin_email: str | None = None
     admin_password: str | None = None
