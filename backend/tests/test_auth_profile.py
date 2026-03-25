@@ -87,3 +87,22 @@ def test_healthz():
     response = client.get("/healthz")
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
+
+
+def test_login_email_is_case_insensitive():
+    client = get_client()
+    manager_payload = {
+        "role": "manager",
+        "managerName": "Gerente Case",
+        "shopName": "Luxe Case",
+        "phone": "11977776666",
+        "emailPrefix": "caseuser",
+        "password": "abc12345",
+        "confirmPassword": "abc12345",
+    }
+    register = client.post("/api/auth/register", json=manager_payload)
+    assert register.status_code == 201
+
+    login = client.post("/api/auth/login", json={"email": "CaseUser@LUXE.com", "password": "abc12345"})
+    assert login.status_code == 200
+    assert login.json()["email"] == "caseuser@luxe.com"
