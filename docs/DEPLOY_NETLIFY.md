@@ -23,3 +23,15 @@
 
 ## Observação
 - Este projeto usa Netlify (frontend), Render (backend) e Neon (PostgreSQL) como stack oficial.
+
+
+## Troubleshooting rápido
+- Se aparecer `POST /api/auth/login 404` no Netlify, o backend não está sendo roteado pelo redirect de `/api/*`.
+- Este repositório agora gera `dist/public/_redirects` durante o build usando `BACKEND_URL`.
+- Em builds da Netlify, `BACKEND_URL` é obrigatório e o deploy falha cedo se a variável não existir (evita publicar front quebrado).
+
+## Acesso de teste (seed bootstrap)
+Com `SEED_BOOTSTRAP_ENABLED=true` (padrão), o backend cria usuários para validar login sem cadastrar manualmente:
+- Gerente: `admin@luxe.com` / `AdminLuxe2026`
+- Profissional: `profissional@luxe.com` / `ProfLuxe2026`
+- Código da loja de teste: `LUXETEST01`
