@@ -45,7 +45,8 @@ def generate_unique_shop_code(db: Session) -> str:
 @router.post("/api/auth/login", response_model=UserBase)
 def login(payload: LoginRequest, response: Response, request: Request, db: Session = Depends(get_db)):
     rate_limiter.hit(f"login:{request.client.host}")
-    user = db.query(User).filter(User.email == payload.email).first()
+    normalized_email = payload.email.strip().lower()
+    user = db.query(User).filter(User.email == normalized_email).first()
     if not user or not user.hashed_password or not verify_password(payload.password, user.hashed_password):
         raise HTTPException(status_code=401, detail={"message": "Credenciais inválidas. Verifique e tente novamente."})
 
